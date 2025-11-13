@@ -16,13 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
   Bell,
-  CreditCard,
-  Heart,
   MapPin,
   Newspaper,
   Pencil,
   Shield,
-  Ticket,
   User,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -57,7 +54,6 @@ function Sidebar() {
 
   const navItems = [
     { icon: User, label: 'Profil', active: true },
-    { icon: CreditCard, label: 'Bank & Kartu' },
     { icon: MapPin, label: 'Alamat' },
     { icon: Shield, label: 'Ubah Password' },
   ];
@@ -65,7 +61,6 @@ function Sidebar() {
   const secondaryNav = [
     { icon: Newspaper, label: 'Pesanan Saya' },
     { icon: Bell, label: 'Notifikasi' },
-    { icon: Ticket, label: 'Voucher Saya' },
   ];
 
   return (
