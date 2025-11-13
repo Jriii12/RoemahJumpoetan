@@ -40,14 +40,17 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="text-muted-foreground text-sm">{product.category}</p>
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
-        <p className="font-bold text-primary text-lg">{formatPrice(product.price)}</p>
+        <p className="font-bold text-primary text-base md:text-lg whitespace-nowrap">
+          {formatPrice(product.price)}
+        </p>
         <Button
           onClick={() => addToCart(product)}
           variant="outline"
-          className="hover:bg-primary hover:text-primary-foreground rounded-full"
+          size="icon"
+          className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0 ml-2"
         >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Add to Cart
+          <ShoppingCart className="h-4 w-4" />
+          <span className="sr-only">Add to Cart</span>
         </Button>
       </CardFooter>
     </Card>
