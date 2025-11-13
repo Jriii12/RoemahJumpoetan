@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  writeBatch,
+} from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -32,6 +39,9 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, BookUser } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Address = {
   id: string;
@@ -40,17 +50,25 @@ type Address = {
   province: string;
   street: string;
   details: string;
-  address: string;
   isDefault: boolean;
 };
 
-const initialAddresses: Address[] = [];
-
 export default function AddressPage() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const addressesColRef = useMemoFirebase(() => {
+    if (user && firestore) {
+      return collection(firestore, `users/${user.uid}/addresses`);
+    }
+    return null;
+  }, [user, firestore]);
+
+  const { data: addresses, isLoading } = useCollection<Omit<Address, 'id'>>(addressesColRef);
+
   const [open, setOpen] = useState(false);
-  const [addresses, setAddresses] = useState(initialAddresses);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  const [addressToDelete, setAddressToDelete] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState('');
@@ -97,55 +115,82 @@ export default function AddressPage() {
     setEditingAddress(address);
   };
 
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!addressesColRef || !firestore || !user) return;
+    
+    const newAddressData = {
+      name,
+      phone,
+      province,
+      street,
+      details,
+    };
 
-    if (editingAddress) {
-      // Update existing address
-      const updatedAddresses = addresses.map((addr) =>
-        addr.id === editingAddress.id
-          ? {
-              ...addr,
-              name,
-              phone,
-              province,
-              street,
-              details,
-              address: `${street}, ${province}`,
-            }
-          : addr
-      );
-      setAddresses(updatedAddresses);
-    } else {
-      // Add new address
-      const newAddress: Address = {
-        id: `addr_${Date.now()}`,
-        name,
-        phone,
-        province,
-        street,
-        details,
-        address: `${street}, ${province}`,
-        isDefault: addresses.length === 0,
-      };
-      setAddresses([...addresses, newAddress]);
+    try {
+        if (editingAddress) {
+            // Update existing address
+            const addressRef = doc(firestore, `users/${user.uid}/addresses`, editingAddress.id);
+            await addDoc(addressesColRef, { ...newAddressData, isDefault: editingAddress.isDefault });
+        } else {
+            // Add new address
+            await addDoc(addressesColleRef, { ...newAddressData, isDefault: !addresses || addresses.length === 0 });
+        }
+        toast({
+            title: `Alamat ${editingAddress ? 'diperbarui' : 'ditambahkan'}`,
+        });
+        handleOpenChange(false);
+    } catch(e) {
+        console.error(e);
+        toast({
+            variant: 'destructive',
+            title: 'Gagal menyimpan alamat'
+        })
     }
-
-    handleOpenChange(false); // Close and reset dialog
   };
 
-  const handleDeleteAddress = (id: string) => {
-    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
-    setAddressToDelete(null);
+  const handleDeleteAddress = async (id: string) => {
+    if (!user || !firestore) return;
+    const addressRef = doc(firestore, `users/${user.uid}/addresses`, id);
+    try {
+      await deleteDoc(addressRef);
+      toast({
+        title: 'Alamat berhasil dihapus',
+      });
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: 'destructive',
+        title: 'Gagal menghapus alamat',
+      });
+    }
   };
   
-  const handleSetDefault = (id: string) => {
-    setAddresses(prev => 
-        prev.map(addr => ({
-            ...addr,
-            isDefault: addr.id === id
-        }))
-    );
+  const handleSetDefault = async (id: string) => {
+     if (!user || !firestore || !addresses) return;
+     const batch = writeBatch(firestore);
+
+     addresses.forEach(addr => {
+        const addressRef = doc(firestore, `users/${user.uid}/addresses`, addr.id);
+        if(addr.id === id) {
+            batch.update(addressRef, { isDefault: true });
+        } else if (addr.isDefault) {
+             batch.update(addressRef, { isDefault: false });
+        }
+     });
+
+     try {
+        await batch.commit();
+        toast({
+            title: 'Alamat utama berhasil diatur'
+        });
+     } catch(e) {
+        console.error(e);
+        toast({
+            variant: 'destructive',
+            title: 'Gagal mengatur alamat utama'
+        });
+     }
   };
 
 
@@ -164,7 +209,12 @@ export default function AddressPage() {
         </CardHeader>
         <Separator />
         <CardContent className="p-6">
-          {addresses.length === 0 ? (
+          {isLoading ? (
+            <div className='space-y-4'>
+                <Skeleton className='h-24 w-full' />
+                <Skeleton className='h-24 w-full' />
+            </div>
+          ) : addresses && addresses.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center py-16 text-muted-foreground">
               <BookUser className="w-16 h-16 mb-4" />
               <h3 className="text-xl font-semibold text-foreground">
@@ -176,7 +226,7 @@ export default function AddressPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {addresses.map((addr, index) => (
+              {addresses && addresses.map((addr, index) => (
                 <div key={addr.id}>
                   <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
                     <div>
@@ -187,7 +237,7 @@ export default function AddressPage() {
                           {addr.phone}
                         </span>
                       </div>
-                      <p className="text-muted-foreground">{addr.address}</p>
+                      <p className="text-muted-foreground">{addr.street}, {addr.province}</p>
                       <p className="text-sm text-muted-foreground">
                         {addr.details}
                       </p>

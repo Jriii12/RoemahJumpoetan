@@ -191,6 +191,48 @@
         "rating",
         "dateCreated"
       ]
+    },
+    "Address": {
+      "title": "Address",
+      "type": "object",
+      "description": "Represents a user's shipping address.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the address."
+        },
+        "name": {
+          "type": "string",
+          "description": "Recipient's full name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Recipient's phone number."
+        },
+        "province": {
+          "type": "string",
+          "description": "Province, City, District, Postal Code."
+        },
+        "street": {
+          "type": "string",
+          "description": "Street name, building, house number."
+        },
+        "details": {
+          "type": "string",
+          "description": "Additional address details (e.g., block, unit number)."
+        },
+        "isDefault": {
+          "type": "boolean",
+          "description": "Whether this is the user's default address."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "phone",
+        "province",
+        "street"
+      ]
     }
   },
   "auth": {
@@ -213,6 +255,26 @@
             {
               "name": "userId",
               "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/addresses/{addressId}",
+        "definition": {
+          "entityName": "Address",
+          "schema": {
+            "$ref": "#/backend/entities/Address"
+          },
+          "description": "Stores user address information. Path-based ownership ensures only the authenticated user can access their own data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "addressId",
+              "description": "The unique identifier of the address."
             }
           ]
         }
