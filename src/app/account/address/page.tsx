@@ -12,10 +12,19 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -40,6 +49,7 @@ export default function AddressPage() {
   const [open, setOpen] = useState(false);
   const [addresses, setAddresses] = useState(initialAddresses);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [addressToDelete, setAddressToDelete] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState('');
@@ -47,7 +57,6 @@ export default function AddressPage() {
   const [province, setProvince] = useState('');
   const [street, setStreet] = useState('');
   const [details, setDetails] = useState('');
-
 
   useEffect(() => {
     if (editingAddress) {
@@ -86,10 +95,10 @@ export default function AddressPage() {
   const handleEditClick = (address: Address) => {
     setEditingAddress(address);
   };
-  
+
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
+
     if (editingAddress) {
       // Update existing address
       const updatedAddresses = addresses.map((addr) =>
@@ -109,14 +118,14 @@ export default function AddressPage() {
     } else {
       // Add new address
       const newAddress: Address = {
-          id: `addr_${Date.now()}`,
-          name,
-          phone,
-          province,
-          street,
-          details,
-          address: `${street}, ${province}`,
-          isDefault: addresses.length === 0,
+        id: `addr_${Date.now()}`,
+        name,
+        phone,
+        province,
+        street,
+        details,
+        address: `${street}, ${province}`,
+        isDefault: addresses.length === 0,
       };
       setAddresses([...addresses, newAddress]);
     }
@@ -124,80 +133,128 @@ export default function AddressPage() {
     handleOpenChange(false); // Close and reset dialog
   };
 
+  const handleDeleteAddress = (id: string) => {
+    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+    setAddressToDelete(null);
+  };
+  
+  const handleSetDefault = (id: string) => {
+    setAddresses(prev => 
+        prev.map(addr => ({
+            ...addr,
+            isDefault: addr.id === id
+        }))
+    );
+  };
+
+
   return (
-    <Card className="bg-card/30 border-border/50 flex-grow">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="font-headline text-2xl">Alamat Saya</CardTitle>
-        <Button onClick={handleAddNewClick} className="bg-accent hover:bg-accent/80 rounded-full">
-          <Plus className="mr-2 h-4 w-4" />
-          Tambah Alamat Baru
-        </Button>
-      </CardHeader>
-      <Separator />
-      <CardContent className="p-6">
-        {addresses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-16 text-muted-foreground">
-            <BookUser className="w-16 h-16 mb-4" />
-            <h3 className="text-xl font-semibold text-foreground">
-              Belum ada alamat
-            </h3>
-            <p className="mt-1">
-              Tambahkan alamat baru untuk kemudahan berbelanja.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {addresses.map((addr, index) => (
-              <div key={addr.id}>
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
-                  <div>
-                    <div className="flex items-center gap-4 mb-2">
-                      <span className="font-semibold">{addr.name}</span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span className="text-muted-foreground">{addr.phone}</span>
-                    </div>
-                    <p className="text-muted-foreground">{addr.address}</p>
-                     <p className="text-sm text-muted-foreground">{addr.details}</p>
-                    <div className="flex gap-2 mt-2">
-                      {addr.isDefault && (
-                        <span className="text-xs border border-accent text-accent px-2 py-0.5 rounded">
-                          Utama
+    <>
+      <Card className="bg-card/30 border-border/50 flex-grow">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-headline text-2xl">Alamat Saya</CardTitle>
+          <Button
+            onClick={handleAddNewClick}
+            className="bg-accent hover:bg-accent/80 rounded-full"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Tambah Alamat Baru
+          </Button>
+        </CardHeader>
+        <Separator />
+        <CardContent className="p-6">
+          {addresses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center py-16 text-muted-foreground">
+              <BookUser className="w-16 h-16 mb-4" />
+              <h3 className="text-xl font-semibold text-foreground">
+                Belum ada alamat
+              </h3>
+              <p className="mt-1">
+                Tambahkan alamat baru untuk kemudahan berbelanja.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {addresses.map((addr, index) => (
+                <div key={addr.id}>
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
+                    <div>
+                      <div className="flex items-center gap-4 mb-2">
+                        <span className="font-semibold">{addr.name}</span>
+                        <Separator orientation="vertical" className="h-4" />
+                        <span className="text-muted-foreground">
+                          {addr.phone}
                         </span>
-                      )}
+                      </div>
+                      <p className="text-muted-foreground">{addr.address}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {addr.details}
+                      </p>
+                      <div className="flex gap-2 mt-2">
+                        {addr.isDefault && (
+                          <span className="text-xs border border-accent text-accent px-2 py-0.5 rounded">
+                            Utama
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 text-right">
-                    <div className="flex gap-4">
-                      <Button variant="link" className="text-accent p-0 h-auto" onClick={() => handleEditClick(addr)}>
-                        Ubah
-                      </Button>
-                      {!addr.isDefault && (
-                        <Button variant="link" className="text-accent p-0 h-auto">
-                          Hapus
-                        </Button>
-                      )}
-                    </div>
-                    {!addr.isDefault && (
+                    <div className="flex flex-col items-end gap-2 text-right">
+                      <div className="flex gap-4">
                         <Button
-                            variant="outline"
-                            className="rounded-full"
+                          variant="link"
+                          className="text-accent p-0 h-auto"
+                          onClick={() => handleEditClick(addr)}
                         >
-                            Atur sebagai utama
+                          Ubah
                         </Button>
-                    )}
+                        {!addr.isDefault && (
+                           <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="link"
+                                className="text-accent p-0 h-auto"
+                              >
+                                Hapus
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Hapus Alamat?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Apakah Anda yakin ingin menghapus alamat ini? Tindakan ini tidak dapat diurungkan.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteAddress(addr.id)} className="bg-destructive hover:bg-destructive/80">Hapus</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
+                      {!addr.isDefault && (
+                        <Button
+                          variant="outline"
+                          className="rounded-full"
+                          onClick={() => handleSetDefault(addr.id)}
+                        >
+                          Atur sebagai utama
+                        </Button>
+                      )}
+                    </div>
                   </div>
+                  {index < addresses.length - 1 && (
+                    <Separator className="mt-6" />
+                  )}
                 </div>
-                {index < addresses.length - 1 && (
-                  <Separator className="mt-6" />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[425px] bg-card">
+        <DialogContent className="sm:max-w-[480px] bg-card">
           <DialogHeader>
             <DialogTitle className="font-headline text-xl">
               {editingAddress ? 'Ubah Alamat' : 'Alamat Baru'}
@@ -207,15 +264,31 @@ export default function AddressPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nama Lengkap</Label>
-                <Input id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nama Lengkap" required />
+                <Input
+                  id="name"
+                  name="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Nama Lengkap"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Nomor Telepon</Label>
-                <Input id="phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Nomor Telepon" required />
+                <Input
+                  id="phone"
+                  name="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Nomor Telepon"
+                  required
+                />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="province">Provinsi, Kota, Kecamatan, Kode Pos</Label>
+              <Label htmlFor="province">
+                Provinsi, Kota, Kecamatan, Kode Pos
+              </Label>
               <Input
                 id="province"
                 name="province"
@@ -237,7 +310,9 @@ export default function AddressPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="details">Detail Lainnya (Cth: Blok / Unit No., Patokan)</Label>
+              <Label htmlFor="details">
+                Detail Lainnya (Cth: Blok / Unit No., Patokan)
+              </Label>
               <Textarea
                 id="details"
                 name="details"
@@ -259,8 +334,6 @@ export default function AddressPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </Card>
+    </>
   );
 }
-
-    
