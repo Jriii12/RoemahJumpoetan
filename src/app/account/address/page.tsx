@@ -21,111 +21,117 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, BookUser } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-// The static list of addresses is removed.
-// In a real application, this would be fetched from a database.
-const initialAddresses: any[] = [];
+type Address = {
+  id: string;
+  name: string;
+  phone: string;
+  province: string;
+  street: string;
+  details: string;
+  address: string;
+  isDefault: boolean;
+};
+
+const initialAddresses: Address[] = [];
 
 export default function AddressPage() {
   const [open, setOpen] = useState(false);
   const [addresses, setAddresses] = useState(initialAddresses);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
+  // Form state
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [province, setProvince] = useState('');
+  const [street, setStreet] = useState('');
+  const [details, setDetails] = useState('');
+
+
+  useEffect(() => {
+    if (editingAddress) {
+      setName(editingAddress.name);
+      setPhone(editingAddress.phone);
+      setProvince(editingAddress.province);
+      setStreet(editingAddress.street);
+      setDetails(editingAddress.details);
+      setOpen(true);
+    }
+  }, [editingAddress]);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      // Reset form when dialog closes
+      setEditingAddress(null);
+      setName('');
+      setPhone('');
+      setProvince('');
+      setStreet('');
+      setDetails('');
+    }
+    setOpen(isOpen);
+  };
+
+  const handleAddNewClick = () => {
+    setEditingAddress(null);
+    setName('');
+    setPhone('');
+    setProvince('');
+    setStreet('');
+    setDetails('');
+    setOpen(true);
+  };
+
+  const handleEditClick = (address: Address) => {
+    setEditingAddress(address);
+  };
+  
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const newAddress = {
-        id: `addr_${Date.now()}`,
-        name: formData.get('name') as string,
-        phone: formData.get('phone') as string,
-        province: formData.get('province') as string,
-        street: formData.get('street') as string,
-        details: formData.get('details') as string,
-        address: `${formData.get('street') as string}, ${formData.get('province') as string}`,
-        isDefault: addresses.length === 0,
-    };
     
-    setAddresses([...addresses, newAddress]);
+    if (editingAddress) {
+      // Update existing address
+      const updatedAddresses = addresses.map((addr) =>
+        addr.id === editingAddress.id
+          ? {
+              ...addr,
+              name,
+              phone,
+              province,
+              street,
+              details,
+              address: `${street}, ${province}`,
+            }
+          : addr
+      );
+      setAddresses(updatedAddresses);
+    } else {
+      // Add new address
+      const newAddress: Address = {
+          id: `addr_${Date.now()}`,
+          name,
+          phone,
+          province,
+          street,
+          details,
+          address: `${street}, ${province}`,
+          isDefault: addresses.length === 0,
+      };
+      setAddresses([...addresses, newAddress]);
+    }
 
-    console.log('Form submitted', newAddress);
-    setOpen(false); // Close the dialog after submission
+    handleOpenChange(false); // Close and reset dialog
   };
 
   return (
     <Card className="bg-card/30 border-border/50 flex-grow">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline text-2xl">Alamat Saya</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-accent hover:bg-accent/80 rounded-full">
-              <Plus className="mr-2 h-4 w-4" />
-              Tambah Alamat Baru
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg bg-card">
-            <DialogHeader>
-              <DialogTitle className="font-headline text-xl">
-                Alamat Baru
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleFormSubmit} className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">
-                    Nama Lengkap
-                  </Label>
-                  <Input id="name" name="name" placeholder="Nama Lengkap" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">
-                    Nomor Telepon
-                  </Label>
-                  <Input id="phone" name="phone" placeholder="Nomor Telepon" required />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="province">
-                  Provinsi, Kota, Kecamatan, Kode Pos
-                </Label>
-                <Input
-                  id="province"
-                  name="province"
-                  placeholder="Provinsi, Kota, Kecamatan, Kode Pos"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="street">Nama Jalan, Gedung, No. Rumah</Label>
-                <Textarea
-                  id="street"
-                  name="street"
-                  placeholder="Nama Jalan, Gedung, No. Rumah"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="details">
-                  Detail Lainnya (Cth: Blok / Unit No., Patokan)
-                </Label>
-                <Textarea
-                  id="details"
-                  name="details"
-                  placeholder="Detail Lainnya (Cth: Blok / Unit No., Patokan)"
-                />
-              </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  Nanti Saja
-                </Button>
-              </DialogClose>
-              <Button type="submit" className="bg-accent hover:bg-accent/80">
-                OK
-              </Button>
-            </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={handleAddNewClick} className="bg-accent hover:bg-accent/80 rounded-full">
+          <Plus className="mr-2 h-4 w-4" />
+          Tambah Alamat Baru
+        </Button>
       </CardHeader>
       <Separator />
       <CardContent className="p-6">
@@ -151,6 +157,7 @@ export default function AddressPage() {
                       <span className="text-muted-foreground">{addr.phone}</span>
                     </div>
                     <p className="text-muted-foreground">{addr.address}</p>
+                     <p className="text-sm text-muted-foreground">{addr.details}</p>
                     <div className="flex gap-2 mt-2">
                       {addr.isDefault && (
                         <span className="text-xs border border-accent text-accent px-2 py-0.5 rounded">
@@ -161,7 +168,7 @@ export default function AddressPage() {
                   </div>
                   <div className="flex flex-col items-end gap-2 text-right">
                     <div className="flex gap-4">
-                      <Button variant="link" className="text-accent p-0 h-auto">
+                      <Button variant="link" className="text-accent p-0 h-auto" onClick={() => handleEditClick(addr)}>
                         Ubah
                       </Button>
                       {!addr.isDefault && (
@@ -188,6 +195,72 @@ export default function AddressPage() {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-[425px] bg-card">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-xl">
+              {editingAddress ? 'Ubah Alamat' : 'Alamat Baru'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleFormSubmit} className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama Lengkap</Label>
+                <Input id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nama Lengkap" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Nomor Telepon</Label>
+                <Input id="phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Nomor Telepon" required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="province">Provinsi, Kota, Kecamatan, Kode Pos</Label>
+              <Input
+                id="province"
+                name="province"
+                value={province}
+                onChange={(e) => setProvince(e.target.value)}
+                placeholder="Provinsi, Kota, Kecamatan, Kode Pos"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="street">Nama Jalan, Gedung, No. Rumah</Label>
+              <Textarea
+                id="street"
+                name="street"
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+                placeholder="Nama Jalan, Gedung, No. Rumah"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="details">Detail Lainnya (Cth: Blok / Unit No., Patokan)</Label>
+              <Textarea
+                id="details"
+                name="details"
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                placeholder="Detail Lainnya (Cth: Blok / Unit No., Patokan)"
+              />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Batal
+                </Button>
+              </DialogClose>
+              <Button type="submit" className="bg-accent hover:bg-accent/80">
+                OK
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
+
+    
