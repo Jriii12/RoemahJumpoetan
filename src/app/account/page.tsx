@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -128,6 +128,7 @@ export default function AccountPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const userDocRef = useMemoFirebase(() => {
     if (user && firestore) {
@@ -152,6 +153,19 @@ export default function AccountPage() {
       setGender(userProfile.gender);
     }
   }, [userProfile]);
+
+  const handleFileSelectClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      console.log('Selected file:', file.name);
+      // Here you would typically handle the file upload process
+      // For example, upload to Firebase Storage and update the user's photoURL
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,9 +301,16 @@ export default function AccountPage() {
                 <div className="flex-shrink-0 w-full md:w-56 flex flex-col items-center">
                    <Avatar className="h-28 w-28 mb-4">
                       {userProfile && <AvatarImage src={user?.photoURL || undefined} />}
-                      <AvatarFallback className="text-4xl">{userProfile ? `${userProfile.firstName[0]}${userProfile.lastName[0]}` : 'U'}</AvatarFallback>
+                      <AvatarFallback className="text-4xl">{userProfile ? `${userProfile.firstName?.[0] || ''}${userProfile.lastName?.[0] || ''}` : 'U'}</AvatarFallback>
                     </Avatar>
-                  <Button variant="outline" className='mb-2'>Pilih Gambar</Button>
+                  <Button variant="outline" className='mb-2' onClick={handleFileSelectClick}>Pilih Gambar</Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    hidden
+                    accept="image/png, image/jpeg"
+                    onChange={handleFileChange}
+                  />
                   <p className="text-xs text-muted-foreground text-center">Ukuran file: maks. 1 MB</p>
                   <p className="text-xs text-muted-foreground text-center">Format file: .JPEG, .PNG</p>
                 </div>
@@ -301,3 +322,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    
