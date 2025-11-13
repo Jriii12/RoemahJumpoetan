@@ -13,8 +13,8 @@ const contactInfo = [
     title: 'Alamat',
     lines: [
       'Jln aiptu a wahab Lr. kebun pisang No.37',
-      'Rt. 031 Rw. 01, Kel. Tuan Kentang',
-      'Kec. Jakabaring, Palembang, 30252',
+      'Rt. 031 Rw. 01, Kec. Jakbaring',
+      'Kel. Tuan Kentang, Palembang, 30252',
     ],
   },
   {
@@ -30,7 +30,7 @@ const contactInfo = [
   {
     icon: Clock,
     title: 'Jam Operasional',
-    lines: ['Senin - Jumat: 08:00 - 17:00', 'Sabtu: 08:00 - 15:00', 'Minggu: Tutup'],
+    lines: ['Senin - Jumat: 09:00 - 17:00', 'Sabtu: 08:00 - 15:00', 'Minggu: Tutup'],
   },
 ];
 
