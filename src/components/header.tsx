@@ -40,7 +40,7 @@ export function Header() {
                   className="flex items-center gap-2 text-lg font-semibold"
                 >
                   <Image
-                    src="/logo.png"
+                    src="/img/logo jumputan.jpg"
                     alt="Roemah Jumpoetan Logo"
                     width={40}
                     height={40}
@@ -62,14 +62,14 @@ export function Header() {
           </Sheet>
           <Link href="/" className="flex items-center space-x-3">
             <Image
-              src="/logo.png"
+              src="/img/logo jumputan.jpg"
               alt="Roemah Jumpoetan Logo"
               width={50}
               height={50}
               className="rounded-full hidden sm:block"
             />
              <Image
-              src="/logo.png"
+              src="/img/logo jumputan.jpg"
               alt="Roemah Jumpoetan Logo"
               width={40}
               height={40}

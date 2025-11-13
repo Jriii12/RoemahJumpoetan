@@ -14,7 +14,7 @@ export default function LoginPage() {
         {/* Left Column */}
         <div className="text-center text-primary hidden md:flex flex-col items-center">
           <Image 
-            src="/logo.png"
+            src="/img/logo jumputan.jpg"
             alt="Roemah Jumpoetan Logo"
             width={250}
             height={250}

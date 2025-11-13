@@ -9,7 +9,7 @@ export function Footer() {
         <div className="flex flex-col gap-2 col-span-1 md:col-span-2">
            <Link href="/" className="flex items-center space-x-3">
             <Image
-              src="/logo.png"
+              src="/img/logo jumputan.jpg"
               alt="Roemah Jumpoetan Logo"
               width={50}
               height={50}
