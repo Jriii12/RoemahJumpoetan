@@ -162,7 +162,7 @@ export default function ContactPage() {
                <div className="space-y-4">
                   <h2 className="font-headline text-3xl font-bold text-primary">Informasi Tambahan</h2>
                   <Card className="bg-card/50 border-border/40">
-                      <CardContent className="p-6">
+                      <CardContent className="p-6 flex items-center justify-center">
                           <ul className="space-y-3 text-muted-foreground">
                               {additionalInfo.map((text, i) => (
                                   <li key={i} className="flex items-start">
