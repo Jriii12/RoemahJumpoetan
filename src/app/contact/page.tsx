@@ -13,14 +13,14 @@ const contactInfo = [
     title: 'Alamat',
     lines: [
       'Jln aiptu a wahab Lr. kebun pisang No.37',
-      'Tuan Kentang, Jakabaring',
-      'Palembang, 30252, Indonesia',
+      'Rt. 031 Rw. 01, Kel. Tuan Kentang',
+      'Kec. Jakabaring, Palembang, 30252',
     ],
   },
   {
     icon: Phone,
     title: 'Telepon',
-    lines: ['+62 895 2489 3101', '+62 882 7672 9787'],
+    lines: ['082178200327 (admin shop)', '0815-1909-2233 (admin butik)'],
   },
   {
     icon: Mail,
