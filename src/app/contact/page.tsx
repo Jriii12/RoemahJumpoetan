@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -6,52 +5,66 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Mail, MapPin, Phone, Clock } from 'lucide-react';
+
+const contactInfo = [
+  {
+    icon: MapPin,
+    title: 'Alamat',
+    lines: ['Pasar Kito Ilir Barat Permai', 'Palembang 30131', 'Indonesia'],
+  },
+  {
+    icon: Phone,
+    title: 'Telepon',
+    lines: ['+62 895 2489 3101', '+62 882 7672 9787'],
+  },
+  {
+    icon: Mail,
+    title: 'Email',
+    lines: ['info@roemahjumpoetan.com', 'sales@roemahjumpoetan.com'],
+  },
+  {
+    icon: Clock,
+    title: 'Jam Operasional',
+    lines: ['Senin - Jumat: 08:00 - 17:00', 'Sabtu: 08:00 - 15:00', 'Minggu: Tutup'],
+  },
+];
 
 export default function ContactPage() {
   return (
-    <div className="container py-12 md:py-24 max-w-2xl mx-auto px-4">
-      <Card className="bg-card border-border/50">
-        <CardHeader className="text-center px-4 md:px-6">
-          <CardTitle className="font-headline text-3xl md:text-5xl font-bold">
-            Hubungi Kami
-          </CardTitle>
-          <CardDescription className="text-base md:text-lg">
-            Ada pertanyaan atau ingin berkolaborasi? Kami siap membantu.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-4 md:px-6">
-          <form className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nama</Label>
-                <Input id="name" placeholder="Nama Anda" />
+    <div className="container py-12 md:py-24 px-4">
+      <div className="text-center mb-12 md:mb-16">
+        <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">
+          Hubungi Kami
+        </h1>
+        <p className="mt-4 text-lg text-primary/80 max-w-3xl mx-auto">
+          Kami siap membantu mewujudkan proyek handycraft impian Anda. Jangan ragu
+          untuk menghubungi tim profesional kami.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {contactInfo.map((info, index) => (
+          <Card key={index} className="text-center bg-card/50 border-border/40 pt-6">
+            <CardHeader className="items-center">
+              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-accent/20 text-accent mb-4">
+                <info.icon className="h-8 w-8" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="email@anda.com" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subject">Subjek</Label>
-              <Input id="subject" placeholder="Subjek pesan Anda" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="message">Pesan</Label>
-              <Textarea
-                id="message"
-                placeholder="Tuliskan pesan Anda di sini..."
-                className="min-h-[150px]"
-              />
-            </div>
-            <Button type="submit" size="lg" className="w-full rounded-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-              Kirim Pesan
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <CardTitle className="font-semibold text-xl">{info.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {info.lines.map((line, i) => (
+                <p key={i} className="text-muted-foreground">
+                  {line}
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+       {/* Optional: Add form and map sections here in the future */}
+
     </div>
   );
 }
