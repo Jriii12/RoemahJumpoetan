@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,12 +24,17 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 type UserProfile = {
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber?: string;
+  gender?: 'male' | 'female';
 };
 
 function Sidebar() {
@@ -122,6 +127,8 @@ function Sidebar() {
 export default function AccountPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+
   const userDocRef = useMemoFirebase(() => {
     if (user && firestore) {
       return doc(firestore, 'users', user.uid);
@@ -130,6 +137,48 @@ export default function AccountPage() {
   }, [user, firestore]);
 
   const { data: userProfile, isLoading } = useDoc<UserProfile>(userDocRef);
+
+  // Form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | undefined>();
+
+  useEffect(() => {
+    if (userProfile) {
+      setFirstName(userProfile.firstName || '');
+      setLastName(userProfile.lastName || '');
+      setPhoneNumber(userProfile.phoneNumber || '');
+      setGender(userProfile.gender);
+    }
+  }, [userProfile]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userDocRef || !firestore) return;
+
+    const updatedData = {
+      firstName,
+      lastName,
+      phoneNumber,
+      gender,
+    };
+
+    setDoc(userDocRef, updatedData, { merge: true })
+      .then(() => {
+        toast({
+          title: 'Data berhasil diperbarui',
+        });
+      })
+      .catch((error) => {
+         const permissionError = new FirestorePermissionError({
+          path: userDocRef.path,
+          operation: 'update',
+          requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
 
   return (
     <div className="container py-8 md:py-12 px-4">
@@ -148,7 +197,7 @@ export default function AccountPage() {
             <Separator />
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row gap-12">
-                <form className="flex-grow space-y-6 max-w-lg">
+                <form onSubmit={handleSave} className="flex-grow space-y-6 max-w-lg">
                   {isLoading ? (
                     <div className='space-y-6'>
                         <div className="flex items-center">
@@ -172,7 +221,8 @@ export default function AccountPage() {
                         </Label>
                         <div className="col-span-3">
                           <Input
-                            defaultValue={userProfile?.firstName}
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
                           />
                         </div>
                       </div>
@@ -182,7 +232,8 @@ export default function AccountPage() {
                         </Label>
                         <div className="col-span-3">
                           <Input
-                            defaultValue={userProfile?.lastName}
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
                           />
                         </div>
                       </div>
@@ -201,7 +252,8 @@ export default function AccountPage() {
                         </Label>
                         <div className="col-span-3">
                            <Input
-                            defaultValue={userProfile?.phoneNumber || ''}
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
                             placeholder='Tambahkan nomor telepon'
                           />
                         </div>
@@ -211,7 +263,7 @@ export default function AccountPage() {
                           Jenis Kelamin
                         </Label>
                         <div className="col-span-3">
-                          <RadioGroup defaultValue="male" className="flex items-center gap-6">
+                          <RadioGroup value={gender} onValueChange={(value) => setGender(value as 'male' | 'female')} className="flex items-center gap-6">
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="male" id="male" />
                                 <Label htmlFor="male">Laki-laki</Label>
