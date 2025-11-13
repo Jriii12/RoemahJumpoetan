@@ -7,22 +7,114 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Plus, BookUser } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, BookUser, MapPin } from 'lucide-react';
+import { useState } from 'react';
 
 // The static list of addresses is removed.
 // In a real application, this would be fetched from a database.
 const addresses: any[] = [];
 
 export default function AddressPage() {
+  const [open, setOpen] = useState(false);
+
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    // Logic to save the new address will be added here.
+    console.log('Form submitted');
+    setOpen(false); // Close the dialog after submission
+  };
+
   return (
     <Card className="bg-card/30 border-border/50 flex-grow">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline text-2xl">Alamat Saya</CardTitle>
-        <Button className="bg-accent hover:bg-accent/80 rounded-full">
-          <Plus className="mr-2 h-4 w-4" />
-          Tambah Alamat Baru
-        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-accent hover:bg-accent/80 rounded-full">
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Alamat Baru
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[525px] bg-card">
+            <DialogHeader>
+              <DialogTitle className="font-headline text-xl">
+                Alamat Baru
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleFormSubmit} className="grid gap-6 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-right">
+                    Nama Lengkap
+                  </Label>
+                  <Input id="name" placeholder="Nama Lengkap" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-right">
+                    Nomor Telepon
+                  </Label>
+                  <Input id="phone" placeholder="Nomor Telepon" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="province">
+                  Provinsi, Kota, Kecamatan, Kode Pos
+                </Label>
+                <Input
+                  id="province"
+                  placeholder="Provinsi, Kota, Kecamatan, Kode Pos"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="street">Nama Jalan, Gedung, No. Rumah</Label>
+                <Textarea
+                  id="street"
+                  placeholder="Nama Jalan, Gedung, No. Rumah"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="details">
+                  Detail Lainnya (Cth: Blok / Unit No., Patokan)
+                </Label>
+                <Textarea
+                  id="details"
+                  placeholder="Detail Lainnya (Cth: Blok / Unit No., Patokan)"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-center"
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                Tambah Lokasi
+              </Button>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Nanti Saja
+                </Button>
+              </DialogClose>
+              <Button type="submit" className="bg-accent hover:bg-accent/80">
+                OK
+              </Button>
+            </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <Separator />
       <CardContent className="p-6">
