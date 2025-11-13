@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, BookUser, MapPin } from 'lucide-react';
+import { Plus, BookUser } from 'lucide-react';
 import { useState } from 'react';
 
 // The static list of addresses is removed.
@@ -113,14 +113,6 @@ export default function AddressPage() {
                   placeholder="Detail Lainnya (Cth: Blok / Unit No., Patokan)"
                 />
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-center"
-              >
-                <MapPin className="mr-2 h-4 w-4" />
-                Tambah Lokasi
-              </Button>
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">
