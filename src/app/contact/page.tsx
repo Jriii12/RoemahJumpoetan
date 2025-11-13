@@ -45,7 +45,7 @@ const contactInfo = [
   {
     icon: Clock,
     title: 'Jam Operasional',
-    lines: ['Senin - Sabtu: 09:00 - 17:00', 'Minggu: Tutup'],
+    lines: ['Senin - Jumat: 09:00 - 17:00', 'Sabtu: 08:00 - 15:00', 'Minggu: Tutup'],
   },
 ];
 
