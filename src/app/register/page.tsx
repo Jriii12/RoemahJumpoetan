@@ -25,8 +25,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, setDoc } from 'firebase/firestore';
 
 const formSchema = z
   .object({
@@ -61,6 +60,14 @@ export default function RegisterPage() {
   });
 
   async function onSubmit(data: FormData) {
+    if (!auth || !firestore) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Firebase is not configured correctly.'
+        });
+        return;
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -69,16 +76,16 @@ export default function RegisterPage() {
       );
       const user = userCredential.user;
 
-      if (user && firestore) {
-        const userRef = doc(firestore, 'users', user.uid);
-        const userData = {
-          id: user.uid,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-        };
-        setDocumentNonBlocking(userRef, userData, { merge: true });
-      }
+      const userRef = doc(firestore, 'users', user.uid);
+      const userData = {
+        id: user.uid,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+      };
+      
+      // We are not using the non-blocking version here to ensure data is saved before redirect
+      await setDoc(userRef, userData, { merge: true });
 
       toast({
         title: 'Registration Successful',
@@ -86,13 +93,14 @@ export default function RegisterPage() {
       });
       router.push('/login');
     } catch (error: any) {
+      let description = 'An unexpected error occurred. Please try again.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'This email is already registered.';
+      }
       toast({
         variant: 'destructive',
         title: 'Registration Failed',
-        description:
-          error.code === 'auth/email-already-in-use'
-            ? 'This email is already registered.'
-            : error.message,
+        description: description,
       });
     }
   }
