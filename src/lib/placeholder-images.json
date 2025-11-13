@@ -1,3 +1,46 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-background",
+      "description": "A close-up of a beautifully textured Jumputan fabric.",
+      "imageUrl": "https://images.unsplash.com/photo-1594734415578-00fc9540929b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmYWJyaWMlMjB0ZXh0dXJlfGVufDB8fHx8MTc2Mjk1MzMxMXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fabric texture"
+    },
+    {
+      "id": "product-kain-1",
+      "description": "An elegant red and gold Jumputan kain.",
+      "imageUrl": "https://images.unsplash.com/photo-1706192048459-77c9fc948ec5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyZWQlMjBmYWJyaWN8ZW58MHx8fHwxNzYzMDA5OTE3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "red fabric"
+    },
+    {
+      "id": "product-kain-2",
+      "description": "A traditional blue and white Jumputan kain.",
+      "imageUrl": "https://images.unsplash.com/photo-1613878420618-662a804d442f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxibHVlJTIwZmFicmljfGVufDB8fHx8MTc2MzA0NDM4MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "blue fabric"
+    },
+    {
+      "id": "product-pakaian-1",
+      "description": "A modern dress made from Jumputan fabric.",
+      "imageUrl": "https://images.unsplash.com/photo-1565462905097-5e701c31dcfb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3b21hbiUyMGRyZXNzfGVufDB8fHx8MTc2MzAwMTE2MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman dress"
+    },
+    {
+      "id": "product-pakaian-2",
+      "description": "A stylish men's shirt with Jumputan accents.",
+      "imageUrl": "https://images.unsplash.com/photo-1740711152088-88a009e877bb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtYW4lMjBzaGlydHxlbnwwfHx8fDE3NjMwMTc1MDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man shirt"
+    },
+    {
+      "id": "product-aksesoris-1",
+      "description": "A handbag made from woven Jumputan fabric.",
+      "imageUrl": "https://images.unsplash.com/photo-1761646238175-5d25cf3566f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8aGFuZGJhZyUyMGFjY2Vzc29yeXxlbnwwfHx8fDE3NjMwNDQzODJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "handbag accessory"
+    },
+    {
+      "id": "product-aksesoris-2",
+      "description": "A colorful Jumputan scarf.",
+      "imageUrl": "https://images.unsplash.com/photo-1609803384370-0e73ef8d424f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmYWJyaWMlMjBzY2FyZnxlbnwwfHx8fDE3NjMwNDQzODF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fabric scarf"
+    }
+  ]
 }
