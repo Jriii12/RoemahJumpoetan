@@ -25,15 +25,29 @@ import { useState } from 'react';
 
 // The static list of addresses is removed.
 // In a real application, this would be fetched from a database.
-const addresses: any[] = [];
+const initialAddresses: any[] = [];
 
 export default function AddressPage() {
   const [open, setOpen] = useState(false);
+  const [addresses, setAddresses] = useState(initialAddresses);
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Logic to save the new address will be added here.
-    console.log('Form submitted');
+    const formData = new FormData(event.currentTarget);
+    const newAddress = {
+        id: `addr_${Date.now()}`,
+        name: formData.get('name') as string,
+        phone: formData.get('phone') as string,
+        province: formData.get('province') as string,
+        street: formData.get('street') as string,
+        details: formData.get('details') as string,
+        address: `${formData.get('street') as string}, ${formData.get('province') as string}`,
+        isDefault: addresses.length === 0,
+    };
+    
+    setAddresses([...addresses, newAddress]);
+
+    console.log('Form submitted', newAddress);
     setOpen(false); // Close the dialog after submission
   };
 
@@ -48,25 +62,25 @@ export default function AddressPage() {
               Tambah Alamat Baru
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px] bg-card">
+          <DialogContent className="sm:max-w-lg bg-card">
             <DialogHeader>
               <DialogTitle className="font-headline text-xl">
                 Alamat Baru
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleFormSubmit} className="grid gap-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleFormSubmit} className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-right">
+                  <Label htmlFor="name">
                     Nama Lengkap
                   </Label>
-                  <Input id="name" placeholder="Nama Lengkap" />
+                  <Input id="name" name="name" placeholder="Nama Lengkap" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-right">
+                  <Label htmlFor="phone">
                     Nomor Telepon
                   </Label>
-                  <Input id="phone" placeholder="Nomor Telepon" />
+                  <Input id="phone" name="phone" placeholder="Nomor Telepon" required />
                 </div>
               </div>
               <div className="space-y-2">
@@ -75,14 +89,18 @@ export default function AddressPage() {
                 </Label>
                 <Input
                   id="province"
+                  name="province"
                   placeholder="Provinsi, Kota, Kecamatan, Kode Pos"
+                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="street">Nama Jalan, Gedung, No. Rumah</Label>
                 <Textarea
                   id="street"
+                  name="street"
                   placeholder="Nama Jalan, Gedung, No. Rumah"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -91,6 +109,7 @@ export default function AddressPage() {
                 </Label>
                 <Textarea
                   id="details"
+                  name="details"
                   placeholder="Detail Lainnya (Cth: Blok / Unit No., Patokan)"
                 />
               </div>
@@ -146,11 +165,6 @@ export default function AddressPage() {
                           Utama
                         </span>
                       )}
-                      {addr.isToko && (
-                        <span className="text-xs border border-muted-foreground text-muted-foreground px-2 py-0.5 rounded">
-                          Alamat Toko
-                        </span>
-                      )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2 text-right">
@@ -158,19 +172,20 @@ export default function AddressPage() {
                       <Button variant="link" className="text-accent p-0 h-auto">
                         Ubah
                       </Button>
-                      {index > 0 && (
+                      {!addr.isDefault && (
                         <Button variant="link" className="text-accent p-0 h-auto">
                           Hapus
                         </Button>
                       )}
                     </div>
-                    <Button
-                      variant="outline"
-                      disabled={addr.isDefault}
-                      className="rounded-full"
-                    >
-                      Atur sebagai utama
-                    </Button>
+                    {!addr.isDefault && (
+                        <Button
+                            variant="outline"
+                            className="rounded-full"
+                        >
+                            Atur sebagai utama
+                        </Button>
+                    )}
                   </div>
                 </div>
                 {index < addresses.length - 1 && (
