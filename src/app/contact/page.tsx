@@ -11,7 +11,11 @@ const contactInfo = [
   {
     icon: MapPin,
     title: 'Alamat',
-    lines: ['Pasar Kito Ilir Barat Permai', 'Palembang 30131', 'Indonesia'],
+    lines: [
+      'Jln aiptu a wahab Lr. kebun pisang No.37',
+      'Tuan Kentang, Jakabaring',
+      'Palembang, 30252, Indonesia',
+    ],
   },
   {
     icon: Phone,
