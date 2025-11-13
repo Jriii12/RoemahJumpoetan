@@ -5,7 +5,7 @@ import Image from 'next/image';
 export function Footer() {
   return (
     <footer className="w-full bg-card border-t mt-12">
-      <div className="container mx-auto py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="container mx-auto py-12 px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="flex flex-col gap-2 col-span-1 md:col-span-2">
            <Link href="/" className="flex items-center space-x-3">
             <Image
@@ -57,7 +57,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border/50">
-        <div className="container mx-auto py-4 text-center text-sm text-muted-foreground">
+        <div className="container mx-auto py-4 px-4 text-center text-sm text-muted-foreground">
           © {new Date().getFullYear()} Roemah Jumpoetan. All Rights Reserved.
         </div>
       </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function AccountPage() {
   return (
-    <div className="container py-12 md:py-24 max-w-2xl">
+    <div className="container py-12 md:py-24 max-w-2xl px-4">
       <Card className="bg-card border-border/50">
         <CardHeader>
           <CardTitle className="font-headline text-3xl">My Account</CardTitle>

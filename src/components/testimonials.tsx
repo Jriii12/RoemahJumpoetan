@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 export function Testimonials() {
   return (
     <section className="py-12 md:py-24 bg-card/50">
-      <div className="container mx-auto">
+      <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="font-headline text-3xl md:text-4xl font-bold">
             What Our Customers Say

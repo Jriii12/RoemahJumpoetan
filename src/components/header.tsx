@@ -24,7 +24,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-20 items-center justify-between">
+      <div className="container flex h-20 items-center justify-between px-4">
         <div className="flex items-center">
           <Sheet>
             <SheetTrigger asChild>
@@ -34,7 +34,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="bg-background">
-              <nav className="grid gap-6 text-lg font-medium">
+              <nav className="grid gap-6 text-lg font-medium p-6">
                 <Link
                   href="/"
                   className="flex items-center gap-2 text-lg font-semibold"
@@ -64,11 +64,18 @@ export function Header() {
             <Image
               src="/logo.png"
               alt="Roemah Jumpoetan Logo"
-              width={60}
-              height={60}
-              className="rounded-full"
+              width={50}
+              height={50}
+              className="rounded-full hidden sm:block"
             />
-            <span className="font-bold font-headline text-lg hidden sm:inline-block">
+             <Image
+              src="/logo.png"
+              alt="Roemah Jumpoetan Logo"
+              width={40}
+              height={40}
+              className="rounded-full sm:hidden"
+            />
+            <span className="font-bold font-headline text-base sm:text-lg hidden sm:inline-block">
               ROEMAH JUMPOETAN
               <br />
               PALEMBANG
@@ -110,7 +117,7 @@ export function Header() {
             <span className="sr-only">Shopping Cart</span>
           </Button>
           <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
-          <Button asChild className="ml-2 rounded-full bg-accent hover:bg-accent/80">
+          <Button asChild className="ml-2 rounded-full bg-accent hover:bg-accent/80 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 h-auto">
             <Link href="/login">Login/Daftar</Link>
           </Button>
         </div>

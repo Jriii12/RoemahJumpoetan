@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 export default function ContactPage() {
   return (
-    <div className="container py-12 md:py-24 max-w-2xl mx-auto">
+    <div className="container py-12 md:py-24 max-w-2xl mx-auto px-4">
       <Card className="bg-card border-border/50">
         <CardHeader className="text-center px-4 md:px-6">
           <CardTitle className="font-headline text-3xl md:text-5xl font-bold">

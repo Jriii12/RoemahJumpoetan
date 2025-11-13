@@ -5,9 +5,9 @@ import { Separator } from '@/components/ui/separator';
 export default function Home() {
   return (
     <div className="bg-gradient-to-b from-background to-background/80">
-      <div className="h-[calc(100vh-80px)] min-h-[500px] flex items-center justify-center relative">
+      <div className="h-[calc(80vh-80px)] min-h-[400px] flex items-center justify-center relative">
           <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-          <div className="container text-center relative">
+          <div className="container text-center relative px-4">
               <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl font-bold text-primary">
                   The Art of Palembang's Jumputan
               </h1>

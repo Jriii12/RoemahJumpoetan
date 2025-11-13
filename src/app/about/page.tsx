@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export default function AboutPage() {
   return (
-    <div className="container py-12 md:py-24">
+    <div className="container py-12 md:py-24 px-4">
       <Card className="bg-card border-border/50">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-4xl md:text-5xl font-bold">
