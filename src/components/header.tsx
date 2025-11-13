@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Menu, ShoppingCart } from 'lucide-react';
+import { LogOut, Menu, ShoppingCart, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -14,13 +14,58 @@ import { useCart } from '@/context/cart-context';
 import { navLinks } from '@/lib/data';
 import { CartSheet } from './cart-sheet';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { signOut } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
+
+type UserProfile = {
+  firstName: string;
+  lastName: string;
+};
 
 export function Header() {
   const { cartCount } = useCart();
   const [isCartOpen, setIsCartOpen] = React.useState(false);
   const pathname = usePathname();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+  const firestore = useFirestore();
+  const router = useRouter();
+
+  const userDocRef = useMemoFirebase(() => {
+    if (user && firestore) {
+      return doc(firestore, 'users', user.uid);
+    }
+    return null;
+  }, [user, firestore]);
+
+  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
+
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/');
+    }
+  };
+
+  const getInitials = () => {
+    if (userProfile) {
+      const { firstName, lastName } = userProfile;
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    return '';
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -117,9 +162,45 @@ export function Header() {
             <span className="sr-only">Shopping Cart</span>
           </Button>
           <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
-          <Button asChild className="ml-2 rounded-full bg-accent hover:bg-accent/80 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 h-auto">
-            <Link href="/login">Login/Daftar</Link>
-          </Button>
+          
+          {isUserLoading ? (
+            <div className="h-9 w-28 animate-pulse rounded-full bg-muted"></div>
+          ) : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback>{getInitials()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {userProfile?.firstName} {userProfile?.lastName}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/account')}>
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Akun Saya</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild className="ml-2 rounded-full bg-accent hover:bg-accent/80 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 h-auto">
+              <Link href="/login">Login/Daftar</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>
