@@ -78,7 +78,6 @@ export default function PasswordPage() {
       });
       form.reset();
     } catch (error: any) {
-      console.error('Password update error:', error);
       let description = 'Terjadi kesalahan. Silakan coba lagi.';
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         description = 'Password saat ini yang Anda masukkan salah.';
