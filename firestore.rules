@@ -1,0 +1,140 @@
+/**
+ * @fileoverview Firestore Security Rules for Roemah Jumpoetan Palembang application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for personal data (users, shopping carts, orders) and allows public read access to product and testimonial data.
+ * Authorization decisions are made independently, without relying on external `get()` calls, to optimize performance and security.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores personal user data. Only the authenticated user can access their own document.
+ * - /products/{productId}: Stores product catalog data. Publicly readable.
+ * - /users/{userId}/shoppingCarts/{shoppingCartId}: Stores a user's shopping cart. Only the owning user can access.
+ * - /users/{userId}/orders/{orderId}: Stores a user's order history. Only the owning user can access.
+ * - /testimonials/{testimonialId}: Stores customer testimonials. Publicly readable.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - Public read access is granted for the products and testimonials collections.
+ * - Write access to products and testimonials is not granted in this initial prototyping phase and will require further rules to manage content creation.
+ *
+ * Denormalization for Authorization:
+ *  N/A - The data model inherently supports authorization independence, as each secured entity either resides under a user-owned path or is intended for public read access.
+ *
+ * Structural Segregation:
+ * The data model uses structural segregation to separate public content (products, testimonials) from private, user-specific data (users, shopping carts, orders).
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces strict user-ownership for user profiles. Only the authenticated user can read or write their own profile.
+     * @path /users/{userId}
+     * @allow (create) - User 'user_abc' can create their own profile if request.auth.uid == 'user_abc'.
+     * @allow (get, update, delete) - User 'user_abc' can get, update, or delete their profile if request.auth.uid == 'user_abc'.
+     * @deny (create) - User 'user_xyz' cannot create a profile with ID 'user_abc'.
+     * @deny (get, update, delete) - User 'user_xyz' cannot get, update, or delete the profile of 'user_abc'.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows public read access to product information. Write access is not currently defined.
+     * @path /products/{productId}
+     * @allow (get, list) - Any user, signed in or not, can read product data.
+     * @deny (create, update, delete) - No user can create, update, or delete product data without additional rules.
+     * @principle Allows public read access while restricting write access.
+     */
+    match /products/{productId} {
+      allow get, list: if true;
+
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Enforces user-ownership for shopping carts. Only the authenticated user can manage their own shopping cart.
+     * @path /users/{userId}/shoppingCarts/{shoppingCartId}
+     * @allow (create) - User 'user_abc' can create a shopping cart under their profile.
+     * @allow (get, update, delete) - User 'user_abc' can get, update, or delete their own shopping cart.
+     * @deny (create) - User 'user_xyz' cannot create a shopping cart under 'user_abc's profile.
+     * @deny (get, update, delete) - User 'user_xyz' cannot access 'user_abc's shopping cart.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/shoppingCarts/{shoppingCartId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+       function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for order history. Only the authenticated user can access their own order history.
+     * @path /users/{userId}/orders/{orderId}
+     * @allow (create) - User 'user_abc' can create an order under their profile.
+     * @allow (get, update, delete) - User 'user_abc' can get, update, or delete their own order.
+     * @deny (create) - User 'user_xyz' cannot create an order under 'user_abc's profile.
+     * @deny (get, update, delete) - User 'user_xyz' cannot access 'user_abc's order history.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/orders/{orderId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows public read access to customer testimonials. Write access is not currently defined.
+     * @path /testimonials/{testimonialId}
+     * @allow (get, list) - Any user, signed in or not, can read testimonials.
+     * @deny (create, update, delete) - No user can create, update, or delete testimonials without additional rules.
+     * @principle Allows public read access while restricting write access.
+     */
+    match /testimonials/{testimonialId} {
+      allow get, list: if true;
+
+      allow create, update, delete: if false;
+    }
+  }
+}
