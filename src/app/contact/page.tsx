@@ -90,7 +90,7 @@ export default function ContactPage() {
               </div>
               <CardTitle className="font-semibold text-xl">{info.title}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-center">
               {info.lines.map((line, i) => (
                 <p key={i} className="text-muted-foreground break-words">
                   {line}
