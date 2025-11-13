@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Lock, Eye } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,13 +23,21 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'Firebase not available',
+      });
+      return;
+    }
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Login Successful',
-        description: 'Welcome back!',
+        description: "Welcome back! You're now logged in.",
       });
-      router.back(); // Go back to the previous page
+      router.push('/'); // Redirect to home page
     } catch (error: any) {
       let description = 'An unexpected error occurred. Please try again.';
       switch (error.code) {
@@ -115,31 +123,33 @@ export default function LoginPage() {
                     />
                     <button
                       type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                     >
-                      <Eye className="h-5 w-5" />
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </button>
                   </div>
                 </div>
-
                 <Button
                   type="submit"
-                  className="w-full rounded-full border-2 border-accent text-accent-foreground hover:bg-accent/80 bg-transparent text-lg font-bold py-6"
+                  className="w-full rounded-full bg-accent hover:bg-accent/80"
                 >
-                  LOG IN
+                  Log In
                 </Button>
-
-                <div className="text-center text-sm text-muted-foreground">
-                  Belum Punya Akun?{' '}
-                  <Link
-                    href="/register"
-                    className="underline font-semibold text-primary/90 hover:text-primary"
-                  >
-                    Daftar
-                  </Link>
-                </div>
               </form>
+              <div className="mt-6 text-center text-sm text-muted-foreground">
+                Belum punya akun?{' '}
+                <Link
+                  href="/register"
+                  className="font-semibold text-primary hover:text-primary/80"
+                >
+                  Daftar
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
