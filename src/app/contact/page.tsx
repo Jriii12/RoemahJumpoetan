@@ -54,7 +54,7 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent>
               {info.lines.map((line, i) => (
-                <p key={i} className="text-muted-foreground">
+                <p key={i} className="text-muted-foreground break-words">
                   {line}
                 </p>
               ))}
