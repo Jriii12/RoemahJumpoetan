@@ -24,45 +24,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-20 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-3">
-            <Image
-              src="/logo.png"
-              alt="Roemah Jumpoetan Logo"
-              width={60}
-              height={60}
-              className="rounded-full"
-            />
-            <span className="font-bold font-headline text-lg hidden lg:inline-block">
-              ROEMAH JUMPOETAN
-              <br />
-              PALEMBANG
-            </span>
-          </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  'transition-colors hover:text-primary/80 relative',
-                  pathname === link.href ? 'text-primary' : 'text-primary/60'
-                )}
-              >
-                {link.label}
-                {pathname === link.href && (
-                  <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"></span>
-                )}
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        <div className="flex flex-1 items-center md:hidden">
+      <div className="container flex h-20 items-center justify-between">
+        <div className="flex items-center">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="flex-shrink-0">
+              <Button variant="ghost" size="icon" className="md:hidden flex-shrink-0 mr-2">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
@@ -94,34 +60,59 @@ export function Header() {
               </nav>
             </SheetContent>
           </Sheet>
-          <div className="flex-1 text-center">
-            <Link href="/" className="font-bold font-headline text-base">
-              Roemah Jumpoetan
-            </Link>
-          </div>
+          <Link href="/" className="flex items-center space-x-3">
+            <Image
+              src="/logo.png"
+              alt="Roemah Jumpoetan Logo"
+              width={60}
+              height={60}
+              className="rounded-full"
+            />
+            <span className="font-bold font-headline text-lg hidden sm:inline-block">
+              ROEMAH JUMPOETAN
+              <br />
+              PALEMBANG
+            </span>
+          </Link>
         </div>
 
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <nav className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              onClick={() => setIsCartOpen(true)}
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-                  {cartCount}
-                </span>
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                'transition-colors hover:text-primary/80 relative',
+                pathname === link.href ? 'text-primary' : 'text-primary/60'
               )}
-              <span className="sr-only">Shopping Cart</span>
-            </Button>
-            <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
-            <Button asChild className="ml-4 rounded-full bg-accent hover:bg-accent/80">
-              <Link href="/login">Login/Daftar</Link>
-            </Button>
-          </nav>
+            >
+              {link.label}
+              {pathname === link.href && (
+                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"></span>
+              )}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => setIsCartOpen(true)}
+          >
+            <ShoppingCart className="h-6 w-6" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                {cartCount}
+              </span>
+            )}
+            <span className="sr-only">Shopping Cart</span>
+          </Button>
+          <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
+          <Button asChild className="ml-2 rounded-full bg-accent hover:bg-accent/80">
+            <Link href="/login">Login/Daftar</Link>
+          </Button>
         </div>
       </div>
     </header>
