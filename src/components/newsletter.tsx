@@ -19,7 +19,7 @@ export function Newsletter() {
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-sm items-center space-x-2">
       <Input type="email" name="email" placeholder="Email" required />
-      <Button type="submit" variant="default" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+      <Button type="submit" variant="default" className="rounded-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
         Subscribe
       </Button>
     </form>

@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 export default function ContactPage() {
   return (
     <div className="container py-12 md:py-24 max-w-2xl mx-auto">
-      <Card>
+      <Card className="bg-card border-border/50">
         <CardHeader className="text-center px-4 md:px-6">
           <CardTitle className="font-headline text-3xl md:text-5xl font-bold">
             Hubungi Kami
@@ -46,7 +46,7 @@ export default function ContactPage() {
                 className="min-h-[150px]"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+            <Button type="submit" size="lg" className="w-full rounded-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
               Kirim Pesan
             </Button>
           </form>

@@ -49,7 +49,7 @@ export default function ProductsPage() {
             placeholder="Search for products..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 rounded-full"
           />
         </div>
         <div className="w-full sm:w-48">
@@ -57,7 +57,7 @@ export default function ProductsPage() {
             value={selectedCategory}
             onValueChange={setSelectedCategory}
           >
-            <SelectTrigger>
+            <SelectTrigger className="rounded-full">
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
@@ -78,7 +78,7 @@ export default function ProductsPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg">
+        <div className="text-center py-16 border-2 border-dashed rounded-lg border-border/50">
             <h3 className="font-semibold text-xl">No Products Found</h3>
             <p className="text-muted-foreground mt-2">
                 Your search and filter combination did not return any results.

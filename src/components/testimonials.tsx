@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 export function Testimonials() {
   return (
-    <section className="py-12 md:py-24 bg-card">
+    <section className="py-12 md:py-24 bg-card/50">
       <div className="container">
         <div className="text-center mb-12">
           <h2 className="font-headline text-3xl md:text-4xl font-bold">
@@ -15,7 +15,7 @@ export function Testimonials() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {testimonials.map((testimonial) => (
-            <Card key={testimonial.id} className="border-2 border-primary/20 shadow-lg">
+            <Card key={testimonial.id} className="bg-card border-border/50 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex flex-col">
                   <span className="font-bold text-lg">{testimonial.name}</span>

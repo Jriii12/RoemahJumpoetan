@@ -4,7 +4,7 @@ import { ProductCard } from './product-card';
 import { Button } from './ui/button';
 
 export function FeaturedProducts() {
-  const featuredProducts = products.slice(0, 3);
+  const featuredProducts = products.slice(0, 4);
 
   return (
     <section className="py-12 md:py-24">
@@ -18,13 +18,13 @@ export function FeaturedProducts() {
             where tradition meets contemporary elegance.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
         <div className="text-center mt-12">
-          <Button asChild size="lg" variant="outline">
+          <Button asChild size="lg" variant="outline" className="rounded-full">
             <Link href="/products">View All Products</Link>
           </Button>
         </div>

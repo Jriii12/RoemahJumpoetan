@@ -104,7 +104,7 @@ export const testimonials: Testimonial[] = [
 
 export const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/products', label: 'Produk' },
+  { href: '/products', label: 'Katalog Produk' },
   { href: '/about', label: 'Tentang Kami' },
   { href: '/contact', label: 'Kontak' },
 ];

@@ -34,20 +34,20 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
+      <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg bg-background">
         <SheetHeader className="px-6">
-          <SheetTitle className="font-headline text-2xl">
+          <SheetTitle className="font-headline text-2xl text-primary">
             Shopping Cart
           </SheetTitle>
         </SheetHeader>
-        <Separator />
+        <Separator className="bg-border/50"/>
         {cartItems.length > 0 ? (
           <>
             <ScrollArea className="my-4 flex-1">
               <div className="flex flex-col gap-6 px-6">
                 {cartItems.map((item) => (
                   <div key={item.product.id} className="flex items-start gap-4">
-                    <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md">
+                    <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-border">
                       <Image
                         src={item.product.image.imageUrl}
                         alt={item.product.name}
@@ -57,7 +57,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                       />
                     </div>
                     <div className="flex flex-1 flex-col gap-1">
-                      <h4 className="font-semibold">{item.product.name}</h4>
+                      <h4 className="font-semibold text-primary">{item.product.name}</h4>
                       <p className="text-sm text-muted-foreground">
                         {formatPrice(item.product.price)}
                       </p>
@@ -103,10 +103,10 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                 ))}
               </div>
             </ScrollArea>
-            <Separator />
+            <Separator className="bg-border/50"/>
             <SheetFooter className="p-6">
               <div className="w-full space-y-4">
-                <div className="flex justify-between text-lg font-semibold">
+                <div className="flex justify-between text-lg font-semibold text-primary">
                   <span>Total</span>
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
@@ -114,8 +114,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                   <Button
                     type="submit"
                     size="lg"
-                    className="w-full"
-                    variant="default"
+                    className="w-full rounded-full"
                     style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}
                   >
                     Proceed to Checkout
@@ -126,12 +125,12 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
           </>
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-            <h3 className="font-semibold text-xl">Your cart is empty</h3>
+            <h3 className="font-semibold text-xl text-primary">Your cart is empty</h3>
             <p className="text-muted-foreground">
               Add some beautiful Jumputan products to get started.
             </p>
             <SheetClose asChild>
-              <Button asChild>
+              <Button asChild className="rounded-full">
                 <Link href="/products">Start Shopping</Link>
               </Button>
             </SheetClose>

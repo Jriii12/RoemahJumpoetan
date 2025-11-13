@@ -7,7 +7,7 @@ import Link from "next/link";
 export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)] py-12">
-        <Card className="w-full max-w-sm">
+        <Card className="w-full max-w-sm bg-card border-border/50">
             <CardHeader>
                 <CardTitle className="font-headline text-2xl">Login</CardTitle>
                 <CardDescription>Enter your email below to login to your account.</CardDescription>
@@ -23,7 +23,7 @@ export default function LoginPage() {
                 </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
-                <Button className="w-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>Sign in</Button>
+                <Button className="w-full rounded-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>Sign in</Button>
                 <div className="text-center text-sm">
                     Don&apos;t have an account?{" "}
                     <Link href="#" className="underline">

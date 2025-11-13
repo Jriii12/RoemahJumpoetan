@@ -23,7 +23,7 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden flex flex-col h-full group">
+    <Card className="overflow-hidden flex flex-col h-full group bg-card border-border/50">
       <CardHeader className="p-0">
         <div className="aspect-[3/4] overflow-hidden relative">
           <Image
@@ -44,7 +44,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <Button
           onClick={() => addToCart(product)}
           variant="outline"
-          className="hover:bg-primary hover:text-primary-foreground"
+          className="hover:bg-primary hover:text-primary-foreground rounded-full"
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
           Add to Cart

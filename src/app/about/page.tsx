@@ -4,7 +4,7 @@ import Image from 'next/image';
 export default function AboutPage() {
   return (
     <div className="container py-12 md:py-24">
-      <Card>
+      <Card className="bg-card border-border/50">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-4xl md:text-5xl font-bold">
             Tentang Roemah Jumpoetan
@@ -20,7 +20,7 @@ export default function AboutPage() {
               className="object-cover"
             />
           </div>
-          <div className="text-lg text-foreground space-y-4">
+          <div className="text-lg text-foreground/80 space-y-4">
             <p>
               Roemah Jumpoetan Palembang adalah sebuah inisiatif untuk melestarikan dan
               mempopulerkan kain Jumputan, salah satu warisan budaya tak benda dari

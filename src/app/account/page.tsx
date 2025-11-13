@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function AccountPage() {
   return (
     <div className="container py-12 md:py-24 max-w-2xl">
-      <Card>
+      <Card className="bg-card border-border/50">
         <CardHeader>
           <CardTitle className="font-headline text-3xl">My Account</CardTitle>
           <CardDescription>
@@ -14,7 +14,7 @@ export default function AccountPage() {
         </CardHeader>
         <CardContent className="space-y-4">
             <p>For now, this page is just a placeholder.</p>
-            <Button asChild>
+            <Button asChild className="rounded-full">
                 <Link href="/products">
                     Continue Shopping
                 </Link>
