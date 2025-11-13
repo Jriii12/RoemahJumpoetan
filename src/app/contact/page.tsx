@@ -45,7 +45,7 @@ const contactInfo = [
   {
     icon: Clock,
     title: 'Jam Operasional',
-    lines: ['Senin - Jumat: 09:00 - 17:00', 'Sabtu: 08:00 - 15:00', 'Minggu: Tutup'],
+    lines: ['Senin - Sabtu: 09:00 - 17:00', 'Minggu: Tutup'],
   },
 ];
 
@@ -155,7 +155,7 @@ export default function ContactPage() {
                       <CardContent className="p-6 flex flex-col items-center justify-center text-center">
                           <MapPin className="w-12 h-12 text-accent mb-4"/>
                           <h3 className="font-semibold text-lg">Peta Lokasi</h3>
-                          <p className="text-muted-foreground">Pasar Kito Ilir Barat Permai, Palembang</p>
+                          <p className="text-muted-foreground">Jl. Aiptu A. Wahab, Palembang</p>
                       </CardContent>
                   </Card>
               </div>
