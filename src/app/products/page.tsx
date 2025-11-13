@@ -32,7 +32,7 @@ export default function ProductsPage() {
 
   return (
     <div className="container py-8 md:py-12">
-      <div className="text-center mb-12">
+      <div className="text-center mb-8 md:mb-12">
         <h1 className="font-headline text-4xl md:text-5xl font-bold">
           Our Collection
         </h1>
@@ -41,7 +41,7 @@ export default function ProductsPage() {
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 md:gap-8 mb-8">
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <div className="relative flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
@@ -52,7 +52,7 @@ export default function ProductsPage() {
             className="pl-10"
           />
         </div>
-        <div className="w-full md:w-48">
+        <div className="w-full sm:w-48">
           <Select
             value={selectedCategory}
             onValueChange={setSelectedCategory}
@@ -72,7 +72,7 @@ export default function ProductsPage() {
       </div>
 
       {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

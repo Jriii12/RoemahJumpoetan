@@ -39,47 +39,49 @@ export function Header() {
             ))}
           </nav>
         </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="md:hidden flex-shrink-0"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <nav className="grid gap-6 text-lg font-medium">
-              <Link
-                href="/"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <span className="font-bold font-headline">
-                  Roemah Jumpoetan
-                </span>
-              </Link>
-              {navLinks.map((link) => (
-                <SheetClose asChild key={link.href}>
-                  <Link href={link.href} className="hover:text-primary">
-                    {link.label}
+        
+        <div className="flex-1 flex items-center md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="flex-shrink-0"
+                >
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <nav className="grid gap-6 text-lg font-medium">
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2 text-lg font-semibold"
+                  >
+                    <span className="font-bold font-headline">
+                      Roemah Jumpoetan
+                    </span>
                   </Link>
-                </SheetClose>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-             <Link href="/" className="flex items-center space-x-2 md:hidden">
-                <span className="font-bold font-headline text-base text-center flex-1">
-                Roemah Jumpoetan
-                </span>
-            </Link>
-          </div>
+                  {navLinks.map((link) => (
+                    <SheetClose asChild key={link.href}>
+                      <Link href={link.href} className="hover:text-primary">
+                        {link.label}
+                      </Link>
+                    </SheetClose>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <div className="flex-1 text-center">
+                <Link href="/" className="font-bold font-headline text-base">
+                    Roemah Jumpoetan
+                </Link>
+            </div>
+        </div>
+
+        <div className="flex flex-none items-center justify-end space-x-2">
           <nav className="flex items-center">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" className="hidden md:inline-flex" asChild>
               <Link href="/login">
                 <User className="h-5 w-5" />
                 <span className="sr-only">Account</span>

@@ -14,15 +14,15 @@ export default function ContactPage() {
   return (
     <div className="container py-12 md:py-24 max-w-2xl mx-auto">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="font-headline text-4xl md:text-5xl font-bold">
+        <CardHeader className="text-center px-4 md:px-6">
+          <CardTitle className="font-headline text-3xl md:text-5xl font-bold">
             Hubungi Kami
           </CardTitle>
-          <CardDescription className="text-lg">
+          <CardDescription className="text-base md:text-lg">
             Ada pertanyaan atau ingin berkolaborasi? Kami siap membantu.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 md:px-6">
           <form className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
