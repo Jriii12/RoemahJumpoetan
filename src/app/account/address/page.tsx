@@ -5,6 +5,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  updateDoc,
   writeBatch,
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -119,7 +120,7 @@ export default function AddressPage() {
     event.preventDefault();
     if (!addressesColRef || !firestore || !user) return;
     
-    const newAddressData = {
+    const addressData = {
       name,
       phone,
       province,
@@ -131,10 +132,10 @@ export default function AddressPage() {
         if (editingAddress) {
             // Update existing address
             const addressRef = doc(firestore, `users/${user.uid}/addresses`, editingAddress.id);
-            await addDoc(addressesColRef, { ...newAddressData, isDefault: editingAddress.isDefault });
+            await updateDoc(addressRef, addressData);
         } else {
             // Add new address
-            await addDoc(addressesColleRef, { ...newAddressData, isDefault: !addresses || addresses.length === 0 });
+            await addDoc(addressesColRef, { ...addressData, isDefault: !addresses || addresses.length === 0 });
         }
         toast({
             title: `Alamat ${editingAddress ? 'diperbarui' : 'ditambahkan'}`,
