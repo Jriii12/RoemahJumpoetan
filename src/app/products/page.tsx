@@ -31,7 +31,7 @@ export default function ProductsPage() {
   }, [searchTerm, selectedCategory]);
 
   return (
-    <div className="container py-8 md:py-12">
+    <div className="container mx-auto py-8 md:py-12">
       <div className="text-center mb-8 md:mb-12">
         <h1 className="font-headline text-4xl md:text-5xl font-bold">
           Our Collection
