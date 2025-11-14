@@ -104,7 +104,7 @@ export default function LoginPage() {
                   <div className="flex justify-between items-center">
                     <Label htmlFor="password">Password</Label>
                     <Link
-                      href="#"
+                      href="/forgot-password"
                       className="text-xs text-muted-foreground hover:text-primary"
                     >
                       Lupa Password?
