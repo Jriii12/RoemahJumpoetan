@@ -128,79 +128,81 @@ export function Header() {
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                'transition-colors hover:text-primary/80 relative',
-                pathname === link.href ? 'text-primary' : 'text-primary/60'
-              )}
-            >
-              {link.label}
-              {pathname === link.href && (
-                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"></span>
-              )}
-            </Link>
-          ))}
-        </nav>
+        <div className="flex items-center gap-4">
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    'transition-colors hover:text-primary/80 relative',
+                    pathname === link.href ? 'text-primary' : 'text-primary/60'
+                  )}
+                >
+                  {link.label}
+                  {pathname === link.href && (
+                    <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"></span>
+                  )}
+                </Link>
+              ))}
+            </nav>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-            onClick={() => setIsCartOpen(true)}
-          >
-            <ShoppingCart className="h-6 w-6" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-                {cartCount}
-              </span>
-            )}
-            <span className="sr-only">Shopping Cart</span>
-          </Button>
-          <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
-          
-          {isUserLoading ? (
-            <div className="h-9 w-28 animate-pulse rounded-full bg-muted"></div>
-          ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>{getInitials()}</AvatarFallback>
-                  </Avatar>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                onClick={() => setIsCartOpen(true)}
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                    {cartCount}
+                  </span>
+                )}
+                <span className="sr-only">Shopping Cart</span>
+              </Button>
+              <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
+              
+              {isUserLoading ? (
+                <div className="h-9 w-28 animate-pulse rounded-full bg-muted"></div>
+              ) : user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback>{getInitials()}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {userProfile?.firstName} {userProfile?.lastName}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/account')}>
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>Akun Saya</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button asChild className="ml-2 rounded-full bg-accent hover:bg-accent/80 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 h-auto">
+                  <Link href="/login">Login/Daftar</Link>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {userProfile?.firstName} {userProfile?.lastName}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/account')}>
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Akun Saya</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button asChild className="ml-2 rounded-full bg-accent hover:bg-accent/80 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 h-auto">
-              <Link href="/login">Login/Daftar</Link>
-            </Button>
-          )}
+              )}
+            </div>
         </div>
       </div>
     </header>
