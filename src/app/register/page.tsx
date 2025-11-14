@@ -24,7 +24,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
 const formSchema = z
@@ -76,6 +76,9 @@ export default function RegisterPage() {
       );
       const user = userCredential.user;
 
+      // Send verification email
+      await sendEmailVerification(user);
+
       const userRef = doc(firestore, 'users', user.uid);
       const userData = {
         id: user.uid,
@@ -84,15 +87,14 @@ export default function RegisterPage() {
         email: data.email,
       };
       
-      // We are not using the non-blocking version here to ensure data is saved before redirect
       await setDoc(userRef, userData, { merge: true });
 
       // Sign the user out immediately after registration
       await signOut(auth);
 
       toast({
-        title: 'Registration Successful',
-        description: 'Your account has been created. Please log in.',
+        title: 'Registrasi Berhasil',
+        description: 'Silakan periksa email Anda untuk melakukan verifikasi sebelum login.',
       });
       router.push('/login');
     } catch (error: any) {
