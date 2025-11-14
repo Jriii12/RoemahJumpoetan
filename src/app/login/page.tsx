@@ -103,20 +103,22 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Check if user already exists in Firestore
-      const userDocRef = doc(firestore, "users", user.uid);
+      const userDocRef = doc(firestore, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      // If user doesn't exist, create a new document
       if (!userDoc.exists()) {
-        const [firstName, ...lastName] = user.displayName?.split(" ") || ["", ""];
+        const nameParts = user.displayName?.split(' ') || [];
+        const firstName = nameParts[0] || 'User';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
         await setDoc(userDocRef, {
-            id: user.uid,
-            firstName: firstName,
-            lastName: lastName.join(" "),
-            email: user.email,
+          id: user.uid,
+          firstName: firstName,
+          lastName: lastName,
+          email: user.email,
         });
       }
+      
       toast({
         title: 'Login Berhasil',
         description: 'Selamat datang kembali!',
@@ -129,6 +131,7 @@ export default function LoginPage() {
         title: 'Login Gagal',
         description: 'Gagal login dengan Google. Silakan coba lagi.',
       });
+       console.error("Google Sign-In Error: ", error);
     }
   };
 
