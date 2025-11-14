@@ -1,21 +1,32 @@
+
+'use client';
+
 import { FeaturedProducts } from '@/components/featured-products';
 import { Testimonials } from '@/components/testimonials';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
 
 export default function Home() {
   return (
     <div className="bg-gradient-to-b from-background to-background/80">
-      <div className="h-[calc(80vh-80px)] min-h-[400px] flex items-center justify-center relative">
-          <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-          <div className="container text-center relative px-4">
-              <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl font-bold text-primary">
-                  The Art of Palembang's Jumputan
-              </h1>
-              <p className="mt-6 text-lg md:text-xl text-primary/80 max-w-3xl mx-auto">
-                  Experience the rich heritage and intricate craftsmanship of authentic
-                  Jumputan textiles, handcrafted by local artisans.
-              </p>
-          </div>
+      <div className="h-[calc(80vh-80px)] min-h-[500px] flex items-center justify-center relative overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1594734415578-00fc9540929b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmYWJyaWMlMjB0ZXh0dXJlfGVufDB8fHx8MTc2Mjk1MzMxMXww&ixlib=rb-4.1.0&q=80&w=1080"
+          alt="A close-up of a beautifully textured Jumputan fabric."
+          data-ai-hint="fabric texture"
+          fill
+          className="object-cover z-0"
+        />
+        <div className="absolute inset-0 bg-black/50 z-10"></div>
+        <div className="container text-center relative z-20 px-4">
+          <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl font-bold text-white">
+            The Art of Palembang's Jumputan
+          </h1>
+          <p className="mt-6 text-lg md:text-xl text-white/80 max-w-3xl mx-auto">
+            Experience the rich heritage and intricate craftsmanship of
+            authentic Jumputan textiles, handcrafted by local artisans.
+          </p>
+        </div>
       </div>
       <FeaturedProducts />
       <Separator className="my-12 md:my-24" />
