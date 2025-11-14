@@ -11,12 +11,13 @@
  * - /products/{productId}: Stores product catalog data. Publicly readable.
  * - /users/{userId}/shoppingCarts/{shoppingCartId}: Stores a user's shopping cart. Only the owning user can access.
  * - /users/{userId}/orders/{orderId}: Stores a user's order history. Only the owning user can access.
- * - /testimonials/{testimonialId}: Stores customer testimonials. Publicly readable.
+ * - /testimonials/{testimonialId}: Stores customer testimonials. Publicly readable, and now creatable by authenticated users.
  *
  * Key Security Decisions:
  * - User listing is disallowed.
  * - Public read access is granted for the products and testimonials collections.
- * - Write access to products and testimonials is not granted in this initial prototyping phase and will require further rules to manage content creation.
+ * - Authenticated users are now allowed to create testimonials.
+ * - Write access to products remains restricted in this prototyping phase.
  *
  * Denormalization for Authorization:
  *  N/A - The data model inherently supports authorization independence, as each secured entity either resides under a user-owned path or is intended for public read access.
@@ -98,18 +99,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to customer testimonials. Write access is not currently defined.
+     * @description Allows public read access to testimonials. Authenticated users can create testimonials.
      * @path /testimonials/{testimonialId}
      * @allow (get, list) - Any user, signed in or not, can read testimonials.
-     * @deny (create, update, delete) - No user can create, update, or delete testimonials without additional rules.
-     * @principle Allows public read access while restricting write access.
+     * @allow (create) - Any authenticated user can create a testimonial.
+     * @deny (update, delete) - No user can update or delete testimonials without additional rules.
+     * @principle Allows public read and controlled creation.
      */
     match /testimonials/{testimonialId} {
       allow get, list: if true;
-
-      allow create, update, delete: if false;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
     }
   }
 }
-
-    
