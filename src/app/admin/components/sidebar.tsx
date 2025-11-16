@@ -67,7 +67,11 @@ const menuItems = [
   },
 ];
 
-export function AdminSidebar() {
+type AdminSidebarProps = {
+  className?: string;
+}
+
+export function AdminSidebar({ className }: AdminSidebarProps) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     Produk: false,
     Pesanan: false,
@@ -89,7 +93,7 @@ export function AdminSidebar() {
 
   return (
     <aside
-      className="w-64 flex-shrink-0 p-4"
+      className={cn("w-64 flex-shrink-0 p-4", className)}
       style={{ backgroundColor: 'hsl(var(--admin-sidebar))', color: 'hsl(var(--admin-sidebar-foreground))' }}
     >
       <nav className="flex flex-col space-y-2">
