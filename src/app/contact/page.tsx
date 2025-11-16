@@ -46,10 +46,10 @@ export default function ContactPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         {/* Contact Form */}
         <div className="flex flex-col">
-          <Card className="bg-card/30 border-border/50 flex-grow">
+          <Card className="bg-card/30 border-border/50">
             <CardHeader>
               <CardTitle className="font-headline text-3xl font-bold">
                 Kirim Pesan
