@@ -1,24 +1,33 @@
 'use client';
 import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, ReactNode } from 'react';
 import { AdminHeader } from './components/header';
 import { AdminSidebar } from './components/sidebar';
 
 export default function AdminLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // If we are on the login page, we don't want to render the admin layout
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
 
   useEffect(() => {
+    // If auth is done loading and there's no user, redirect to login
     if (!isUserLoading && !user) {
       router.push('/admin/login');
     }
   }, [user, isUserLoading, router]);
 
+  // While loading or if there's no user, show a loading screen.
+  // This content is safe because the useEffect will trigger a redirect.
   if (isUserLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[hsl(var(--admin-background))] text-white">
@@ -27,6 +36,7 @@ export default function AdminLayout({
     );
   }
 
+  // If user is logged in, render the main admin layout
   return (
     <div
       className="min-h-screen w-full text-white"

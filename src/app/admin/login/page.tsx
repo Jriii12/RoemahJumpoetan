@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
   useEffect(() => {
     if (!isUserLoading && user && firestore) {
       // User is already logged in, check their role
-      const checkRole = async () => {
+      const checkRoleAndRedirect = async () => {
         const userDocRef = doc(firestore, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
           }
         }
       };
-      checkRole();
+      checkRoleAndRedirect();
     }
   }, [user, isUserLoading, firestore, router]);
 
@@ -101,6 +101,15 @@ export default function AdminLoginPage() {
       });
     }
   };
+  
+  // Don't render the form if the user is loading or already logged in and being redirected
+  if(isUserLoading || user) {
+     return (
+       <div className="flex min-h-screen items-center justify-center bg-secondary">
+          <p>Loading...</p>
+       </div>
+     )
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary">
