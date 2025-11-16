@@ -31,7 +31,7 @@ function ProtectedAdminContent({ children }: { children: ReactNode }) {
   // If user is logged in, render the main admin layout
   return (
     <div
-      className="min-h-screen w-full text-white"
+      className="min-h-screen w-full"
       style={{ backgroundColor: 'hsl(var(--admin-background))' }}
     >
       {/* Mobile Sidebar */}

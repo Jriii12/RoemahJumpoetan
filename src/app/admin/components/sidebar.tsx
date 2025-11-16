@@ -10,6 +10,7 @@ import {
   Archive,
   User,
   LogOut,
+  Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,9 +19,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { doc } from 'firebase/firestore';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 const menuItems = [
   {
@@ -61,9 +66,14 @@ const menuItems = [
   },
 ];
 
+type UserProfile = {
+  firstName?: string;
+  lastName?: string;
+};
+
 type AdminSidebarProps = {
   className?: string;
-}
+};
 
 export function AdminSidebar({ className }: AdminSidebarProps) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -73,6 +83,26 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
   });
   const auth = useAuth();
   const router = useRouter();
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(() => {
+    if (user && firestore) {
+      return doc(firestore, 'users', user.uid);
+    }
+    return null;
+  }, [user, firestore]);
+
+  const { data: userProfile, isLoading } = useDoc<UserProfile>(userDocRef);
+
+  const getInitials = () => {
+    if (userProfile) {
+      const { firstName, lastName } = userProfile;
+      return `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase();
+    }
+    return '';
+  };
+
 
   const handleLogout = async () => {
     if (auth) {
@@ -87,10 +117,35 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
 
   return (
     <aside
-      className={cn("w-64 flex-shrink-0 p-4", className)}
-      style={{ backgroundColor: 'hsl(var(--admin-sidebar))', color: 'hsl(var(--admin-sidebar-foreground))' }}
+      className={cn(
+        'w-64 flex-shrink-0 p-4 flex flex-col',
+        className
+      )}
+      style={{
+        backgroundColor: 'hsl(var(--background))',
+        color: 'hsl(var(--foreground))',
+      }}
     >
-      <nav className="flex flex-col space-y-2">
+      <div className="flex items-center gap-4 mb-6">
+        {isLoading ? (
+          <Skeleton className="h-12 w-12 rounded-full" />
+        ) : (
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={user?.photoURL || undefined} />
+            <AvatarFallback>{getInitials()}</AvatarFallback>
+          </Avatar>
+        )}
+        <div className="flex-grow">
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ) : (
+            <p className="font-bold">{userProfile?.firstName || 'Admin'}</p>
+          )}
+        </div>
+      </div>
+      <nav className="flex-grow flex flex-col space-y-2">
         {menuItems.map((item) =>
           item.subItems ? (
             <Collapsible
@@ -140,6 +195,8 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
             </Button>
           )
         )}
+      </nav>
+      <div className="mt-auto">
         <Button
           onClick={handleLogout}
           variant="ghost"
@@ -150,7 +207,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
             <span>Log Out</span>
           </div>
         </Button>
-      </nav>
+      </div>
     </aside>
   );
 }

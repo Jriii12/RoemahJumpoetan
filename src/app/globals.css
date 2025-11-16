@@ -36,11 +36,11 @@ body {
 
     /* Admin theme variables */
     --admin-background: 290 80% 10%;
-    --admin-sidebar: 290 70% 15%;
+    --admin-sidebar: 290 80% 10%;
     --admin-sidebar-foreground: 300 10% 98%;
     --admin-primary: 290 50% 60%;
     --admin-primary-foreground: 300 10% 98%;
-    --admin-content-background: 290 75% 12%;
+    --admin-content-background: 290 70% 15%;
     --admin-content-foreground: 300 10% 98%;
     --admin-border: 290 70% 30%;
   }
@@ -72,11 +72,11 @@ body {
 
     /* Admin theme variables */
     --admin-background: 290 80% 10%;
-    --admin-sidebar: 290 70% 15%;
+    --admin-sidebar: 290 80% 10%;
     --admin-sidebar-foreground: 300 10% 98%;
     --admin-primary: 290 50% 60%;
     --admin-primary-foreground: 300 10% 98%;
-    --admin-content-background: 290 75% 12%;
+    --admin-content-background: 290 70% 15%;
     --admin-content-foreground: 300 10% 98%;
     --admin-border: 290 70% 30%;
   }
