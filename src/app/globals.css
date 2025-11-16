@@ -40,9 +40,9 @@ body {
     --admin-sidebar-foreground: 290 80% 10%; /* Dark text for sidebar */
     --admin-primary: 290 50% 60%;
     --admin-primary-foreground: 300 10% 98%;
-    --admin-content-background: 290 80% 10%; /* Dark content background */
-    --admin-content-foreground: 300 10% 98%; /* Light text for content */
-    --admin-border: 290 70% 80%; /* Lighter border for white sidebar */
+    --admin-content-background: 0 0% 100%; /* White content background */
+    --admin-content-foreground: 290 80% 10%; /* Dark text for content */
+    --admin-border: 240 5% 90%; /* Light border for content */
   }
   .dark {
     --background: 290 80% 10%;
@@ -76,9 +76,9 @@ body {
     --admin-sidebar-foreground: 290 80% 10%; /* Dark text for sidebar */
     --admin-primary: 290 50% 60%;
     --admin-primary-foreground: 300 10% 98%;
-    --admin-content-background: 290 80% 10%; /* Dark content background */
-    --admin-content-foreground: 300 10% 98%; /* Light text for content */
-    --admin-border: 290 70% 80%; /* Lighter border for white sidebar */
+    --admin-content-background: 0 0% 100%; /* White content background */
+    --admin-content-foreground: 290 80% 10%; /* Dark text for content */
+    --admin-border: 240 5% 90%; /* Light border for content */
   }
 }
 
