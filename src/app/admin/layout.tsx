@@ -22,7 +22,7 @@ function ProtectedAdminContent({ children }: { children: ReactNode }) {
   // This content is safe because the useEffect will trigger a redirect.
   if (isUserLoading || !user) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[hsl(var(--admin-background))] text-white">
+      <div className="flex h-screen w-full items-center justify-center bg-[hsl(var(--admin-background))] text-[hsl(var(--admin-content-foreground))]">
         Loading...
       </div>
     );
@@ -55,10 +55,11 @@ function ProtectedAdminContent({ children }: { children: ReactNode }) {
         <AdminHeader onMenuClick={() => setSidebarOpen(!isSidebarOpen)} />
         <main className="flex-1 p-4">
           <div
-            className="rounded-lg border-2 border-[hsl(var(--admin-border))] p-6 h-full"
+            className="rounded-lg border p-6 h-full"
             style={{
               backgroundColor: 'hsl(var(--admin-content-background))',
               color: 'hsl(var(--admin-content-foreground))',
+              borderColor: 'hsl(var(--admin-border))',
             }}
           >
             {children}

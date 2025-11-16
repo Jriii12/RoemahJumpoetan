@@ -118,34 +118,35 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
   return (
     <aside
       className={cn(
-        'w-64 flex-shrink-0 p-4 flex flex-col',
+        'w-64 flex-shrink-0 p-4 flex flex-col border-r',
+        'bg-[hsl(var(--admin-sidebar))] text-[hsl(var(--admin-sidebar-foreground))] border-[hsl(var(--admin-border))]',
         className
       )}
-      style={{
-        backgroundColor: 'hsl(var(--background))',
-        color: 'hsl(var(--foreground))',
-      }}
     >
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-4 p-2">
         {isLoading ? (
-          <Skeleton className="h-12 w-12 rounded-full" />
+          <Skeleton className="h-10 w-10 rounded-full" />
         ) : (
-          <Avatar className="h-12 w-12">
+          <Avatar className="h-10 w-10">
             <AvatarImage src={user?.photoURL || undefined} />
-            <AvatarFallback>{getInitials()}</AvatarFallback>
+            <AvatarFallback className='bg-muted text-muted-foreground'>{getInitials()}</AvatarFallback>
           </Avatar>
         )}
         <div className="flex-grow">
           {isLoading ? (
             <div className="space-y-2">
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-20" />
             </div>
           ) : (
             <p className="font-bold">{userProfile?.firstName || 'Admin'}</p>
           )}
         </div>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
+          <LogOut className="h-4 w-4" />
+        </Button>
       </div>
-      <nav className="flex-grow flex flex-col space-y-2">
+      <Separator className='bg-[hsl(var(--admin-border))]' />
+      <nav className="flex-grow flex flex-col space-y-2 mt-4">
         {menuItems.map((item) =>
           item.subItems ? (
             <Collapsible
@@ -156,7 +157,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-between font-semibold"
+                  className="w-full justify-between font-semibold text-base"
                 >
                   <div className="flex items-center gap-3">
                     <item.icon className="h-5 w-5" />
@@ -169,7 +170,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
                   )}
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="pl-8 flex flex-col space-y-2 mt-2">
+              <CollapsibleContent className="pl-12 flex flex-col space-y-2 mt-2">
                 {item.subItems.map((sub) => (
                   <Link
                     key={sub.href}
@@ -186,7 +187,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
               key={item.href}
               asChild
               variant="ghost"
-              className="w-full justify-start font-semibold"
+              className="w-full justify-start font-semibold text-base"
             >
               <Link href={item.href!} className="flex items-center gap-3">
                 <item.icon className="h-5 w-5" />
@@ -196,18 +197,6 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
           )
         )}
       </nav>
-      <div className="mt-auto">
-        <Button
-          onClick={handleLogout}
-          variant="ghost"
-          className="w-full justify-start font-semibold"
-        >
-          <div className="flex items-center gap-3">
-            <LogOut className="h-5 w-5" />
-            <span>Log Out</span>
-          </div>
-        </Button>
-      </div>
     </aside>
   );
 }
