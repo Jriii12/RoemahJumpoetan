@@ -33,14 +33,17 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 60 30% 96%;
-    --sidebar-foreground: 29 25% 15%;
-    --sidebar-primary: 29 31% 50%;
-    --sidebar-primary-foreground: 30 50% 98%;
-    --sidebar-accent: 29 30% 85%;
-    --sidebar-accent-foreground: 29 25% 15%;
-    --sidebar-border: 29 20% 80%;
-    --sidebar-ring: 29 31% 50%;
+
+    /* Admin theme variables */
+    --admin-background: 265 80% 10%; /* Dark purple background */
+    --admin-sidebar: 265 20% 96%; /* Light grey for sidebar */
+    --admin-sidebar-foreground: 265 25% 15%; /* Dark text for sidebar */
+    --admin-primary: 265 80% 10%;
+    --admin-primary-foreground: 300 10% 98%;
+    --admin-content-background: 240 50% 96%; /* Light grey for content area */
+    --admin-content-foreground: 240 10% 3.9%;
+    --admin-border: 35 92% 55%; /* Blueish border */
+
   }
   .dark {
     --background: 290 80% 10%;
@@ -67,14 +70,16 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 29 15% 12%;
-    --sidebar-foreground: 30 50% 98%;
-    --sidebar-primary: 29 31% 50%;
-    --sidebar-primary-foreground: 30 50% 98%;
-    --sidebar-accent: 29 15% 20%;
-    --sidebar-accent-foreground: 30 50% 98%;
-    --sidebar-border: 29 15% 25%;
-    --sidebar-ring: 29 31% 50%;
+
+    /* Admin theme variables */
+    --admin-background: 265 80% 10%;
+    --admin-sidebar: 265 20% 96%;
+    --admin-sidebar-foreground: 265 25% 15%;
+    --admin-primary: 265 80% 10%;
+    --admin-primary-foreground: 300 10% 98%;
+    --admin-content-background: 240 50% 96%;
+    --admin-content-foreground: 240 10% 3.9%;
+    --admin-border: 210 92% 55%;
   }
 }
 
