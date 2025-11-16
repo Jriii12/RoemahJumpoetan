@@ -49,7 +49,7 @@ export default function ContactPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Contact Form */}
         <div className="lg:col-span-3">
-          <Card className="bg-card/30 border-border/50 h-full">
+          <Card className="bg-card/30 border-border/50">
             <CardHeader>
               <CardTitle className="font-headline text-3xl font-bold">
                 Kirim Pesan
