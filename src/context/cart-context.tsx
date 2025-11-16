@@ -3,15 +3,16 @@
 import type { Product } from '@/lib/data';
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import type { WithId } from '@/firebase';
 
 export type CartItem = {
-  product: Product;
+  product: WithId<Omit<Product, 'id'>>;
   quantity: number;
 };
 
 type CartContextType = {
   cartItems: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: WithId<Omit<Product, 'id'>>) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   cartCount: number;
@@ -24,7 +25,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: WithId<Omit<Product, 'id'>>) => {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find(
         (item) => item.product.id === product.id

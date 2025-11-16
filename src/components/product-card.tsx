@@ -6,9 +6,11 @@ import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 import { useCart } from '@/context/cart-context';
 import type { Product } from '@/lib/data';
 import { ShoppingCart } from 'lucide-react';
+import type { WithId } from '@/firebase';
+
 
 type ProductCardProps = {
-  product: Product;
+  product: WithId<Omit<Product, 'id'>>;
 };
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -21,6 +23,8 @@ export function ProductCard({ product }: ProductCardProps) {
       minimumFractionDigits: 0,
     }).format(price);
   };
+
+  const productWithId = { ...product };
 
   return (
     <Card className="overflow-hidden flex flex-col h-full group bg-card border-border/50">
@@ -44,7 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {formatPrice(product.price)}
         </p>
         <Button
-          onClick={() => addToCart(product)}
+          onClick={() => addToCart(productWithId)}
           variant="outline"
           size="icon"
           className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0 ml-2"

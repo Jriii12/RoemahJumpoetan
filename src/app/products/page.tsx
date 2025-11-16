@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react';
 import { ProductCard } from '@/components/product-card';
-import { products, type Product } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -12,6 +11,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
+import type { Product } from '@/lib/data';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 const categories = [
   'Semua Produk',
@@ -19,13 +23,28 @@ const categories = [
   'Fashion Muslim',
   'Pakaian Pria',
   'Souvenir & Perlengkapan Pesta',
+  'Kain',
+  'Pakaian',
+  'Aksesoris'
 ];
+
+const uniqueCategories = [...new Set(categories)];
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua Produk');
+  
+  const firestore = useFirestore();
+
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'), orderBy('name'));
+  }, [firestore]);
+
+  const { data: products, isLoading } = useCollection<Omit<Product, 'id'>>(productsQuery);
 
   const filteredProducts = useMemo(() => {
+    if (!products) return [];
     return products.filter((product) => {
       const matchesCategory =
         selectedCategory === 'Semua Produk' || product.category === selectedCategory;
@@ -34,7 +53,7 @@ export default function ProductsPage() {
         .includes(searchTerm.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, products]);
 
   return (
     <div className="container mx-auto py-8 md:py-12 px-4">
@@ -67,7 +86,7 @@ export default function ProductsPage() {
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((category) => (
+              {uniqueCategories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>
@@ -77,7 +96,17 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {filteredProducts.length > 0 ? (
+      {isLoading ? (
+         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+            {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-2">
+                    <Skeleton className="aspect-[3/4] w-full" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </div>
+            ))}
+         </div>
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
