@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,41 +12,92 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { useFirestore, useUser } from '@/firebase';
 import { LogIn } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { toast } = useToast();
   const router = useRouter();
-  const auth = useAuth();
+  const searchParams = useSearchParams();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    const error = searchParams.get('error');
+    if (error === 'no_access') {
+      toast({
+        variant: 'destructive',
+        title: 'Akses Ditolak',
+        description: 'Akun Anda tidak memiliki hak akses admin.',
+      });
+    }
+  }, [searchParams, toast]);
+
+  useEffect(() => {
+    if (!isUserLoading && user && firestore) {
+      // User is already logged in, check their role
+      const checkRole = async () => {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.role === 'admin' || userData.role === 'owner') {
+            router.push('/admin/dashboard');
+          }
+        }
+      };
+      checkRole();
+    }
+  }, [user, isUserLoading, firestore, router]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Firebase auth service is not available.',
-      });
-      return;
-    }
+    const auth = getAuth();
+    if (!firestore) return;
+
     try {
-      // For a real admin panel, you'd want to check for admin role/claims here
-      await signInWithEmailAndPassword(auth, email, password);
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome, Admin!',
-      });
-      router.push('/admin/dashboard');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Check for admin role in Firestore
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.role === 'admin' || userData.role === 'owner') {
+            toast({
+              title: 'Login Successful',
+              description: 'Welcome, ' + (userData.firstName || 'Admin') + '!',
+            });
+            router.push('/admin/dashboard');
+        } else {
+            await auth.signOut();
+            toast({
+                variant: 'destructive',
+                title: 'Login Failed',
+                description: 'You do not have admin access.',
+            });
+        }
+      } else {
+         await auth.signOut();
+         toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: 'User data not found.',
+          });
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'Invalid credentials or you do not have admin access.',
+        description: 'Invalid credentials or network error.',
       });
     }
   };

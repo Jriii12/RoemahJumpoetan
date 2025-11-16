@@ -6,7 +6,7 @@
  * Authorization decisions are made independently, without relying on external `get()` calls, to optimize performance and security.
  *
  * Data Structure:
- * - /users/{userId}: Stores personal user data. Only the authenticated user can access their own document.
+ * - /users/{userId}: Stores personal user data. Only the authenticated user can access their own document. A 'role' field governs admin/owner access.
  * - /users/{userId}/addresses/{addressId}: Stores user's shipping addresses. Only the owning user can manage them.
  * - /products/{productId}: Stores product catalog data. Publicly readable.
  * - /users/{userId}/shoppingCarts/{shoppingCartId}: Stores a user's shopping cart. Only the owning user can access.
@@ -18,6 +18,7 @@
  * - Public read access is granted for the products and testimonials collections.
  * - Authenticated users are now allowed to create testimonials.
  * - Write access to products remains restricted in this prototyping phase.
+ * - The `role` field on a user document is protected.
  *
  * Denormalization for Authorization:
  *  N/A - The data model inherently supports authorization independence, as each secured entity either resides under a user-owned path or is intended for public read access.
@@ -34,18 +35,22 @@ service cloud.firestore {
     }
     
     /**
-     * @description Enforces strict user-ownership for user profiles. Only the authenticated user can read or write their own profile.
+     * @description Enforces strict user-ownership for user profiles. Only the authenticated user can read or write their own profile. The 'role' field is immutable by the user.
      * @path /users/{userId}
      * @allow (create) - User 'user_abc' can create their own profile if request.auth.uid == 'user_abc'.
-     * @allow (get, update, delete) - User 'user_abc' can get, update, or delete their profile if request.auth.uid == 'user_abc'.
+     * @allow (get, delete) - User 'user_abc' can get or delete their profile if request.auth.uid == 'user_abc'.
+     * @allow (update) - User 'user_abc' can update their profile, but cannot change their own 'role'.
      * @deny (create) - User 'user_xyz' cannot create a profile with ID 'user_abc'.
      * @deny (get, update, delete) - User 'user_xyz' cannot get, update, or delete the profile of 'user_abc'.
-     * @principle Enforces document ownership for all operations.
+     * @deny (update) - User cannot change their own `role` field.
+     * @principle Enforces document ownership for all operations and protects sensitive fields.
      */
     match /users/{userId} {
-      allow get, update, delete: if isOwner(userId);
+      allow get, delete: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
+      // User can update their profile, but not their role.
+      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
     }
     
     /**
