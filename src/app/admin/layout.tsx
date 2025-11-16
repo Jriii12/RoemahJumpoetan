@@ -5,19 +5,9 @@ import { useEffect, ReactNode } from 'react';
 import { AdminHeader } from './components/header';
 import { AdminSidebar } from './components/sidebar';
 
-export default function AdminLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+function ProtectedAdminContent({ children }: { children: ReactNode }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const pathname = usePathname();
-
-  // If we are on the login page, we don't want to render the admin layout
-  if (pathname === '/admin/login') {
-    return <>{children}</>;
-  }
 
   useEffect(() => {
     // If auth is done loading and there's no user, redirect to login
@@ -48,7 +38,10 @@ export default function AdminLayout({
         <main className="flex-1 p-4">
           <div
             className="rounded-lg border-2 border-[hsl(var(--admin-border))] p-6 h-[calc(100vh-120px)]"
-            style={{ backgroundColor: 'hsl(var(--admin-content-background))', color: 'hsl(var(--admin-content-foreground))' }}
+            style={{
+              backgroundColor: 'hsl(var(--admin-content-background))',
+              color: 'hsl(var(--admin-content-foreground))',
+            }}
           >
             {children}
           </div>
@@ -56,4 +49,20 @@ export default function AdminLayout({
       </div>
     </div>
   );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const pathname = usePathname();
+
+  // If we are on the login page, we don't want to render the protected admin layout
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
+  // All other admin pages are wrapped in the protected layout
+  return <ProtectedAdminContent>{children}</ProtectedAdminContent>;
 }
