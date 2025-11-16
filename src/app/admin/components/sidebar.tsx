@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   ShoppingBag,
   ShoppingCart,
-  MessageSquare,
   Archive,
   User,
   LogOut,
@@ -46,11 +45,6 @@ const menuItems = [
       { label: 'Pengiriman', href: '/admin/orders/shipping' },
       { label: 'Return/Refund', href: '/admin/orders/returns' },
     ],
-  },
-  {
-    label: 'Obrolan',
-    href: '/admin/chat',
-    icon: MessageSquare,
   },
   {
     label: 'Gudang',
