@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -311,6 +312,9 @@ export default function AddressPage() {
             <DialogTitle className="font-headline text-xl">
               {editingAddress ? 'Ubah Alamat' : 'Alamat Baru'}
             </DialogTitle>
+             <DialogDescription>
+                Lengkapi detail di bawah ini untuk menyimpan alamat Anda.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFormSubmit} className="grid gap-4 py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
