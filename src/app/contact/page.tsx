@@ -169,7 +169,7 @@ export default function ContactPage() {
              <CardContent>
                 <div className="aspect-video rounded-md overflow-hidden">
                     <iframe 
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.37512128763!2d104.78316531475659!3d-3.00399899771123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9e4a3b2b075b%3A0x8df555f5f4a7c3b2!2sROEMAH%20JUMPOETAN%20PALEMBANG!5e0!3m2!1sen!2sid!4v1689233056731!5m2!1sen!2sid" 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.37512128763!2d104.78316531475659!3d-3.00399899771123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9e4a3b2b075b%3A0x8df555f5f4a7c3b2!2sROEMAH%20JUMPOETAN%20PALEMBANG!5e0!3m2!1sen!2sid!4v1700000000000!5m2!1sen!2sid" 
                         width="100%" 
                         height="100%" 
                         style={{border:0}} 
