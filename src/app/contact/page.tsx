@@ -46,10 +46,10 @@ export default function ContactPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* Contact Form */}
-        <div className="lg:col-span-3">
-          <Card className="bg-card/30 border-border/50">
+        <div className="flex flex-col">
+          <Card className="bg-card/30 border-border/50 flex-grow">
             <CardHeader>
               <CardTitle className="font-headline text-3xl font-bold">
                 Kirim Pesan
@@ -117,7 +117,7 @@ export default function ContactPage() {
         </div>
 
         {/* Contact Info & Map */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="space-y-8">
           <Card className="bg-card/30 border-border/50">
             <CardHeader>
               <CardTitle className="font-headline text-2xl font-bold">
@@ -167,11 +167,11 @@ export default function ContactPage() {
                 <CardTitle className="font-headline text-2xl font-bold">Lokasi Butik</CardTitle>
              </CardHeader>
              <CardContent>
-                <div className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
+                <div className="aspect-video rounded-md overflow-hidden">
                     <iframe 
                         src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.37512128763!2d104.78316531475659!3d-3.00399899771123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9e4a3b2b075b%3A0x8df555f5f4a7c3b2!2sROEMAH%20JUMPOETAN%20PALEMBANG!5e0!3m2!1sen!2sid!4v1689233056731!5m2!1sen!2sid" 
                         width="100%" 
-                        height="300" 
+                        height="100%" 
                         style={{border:0}} 
                         allowFullScreen={true} 
                         loading="lazy" 
