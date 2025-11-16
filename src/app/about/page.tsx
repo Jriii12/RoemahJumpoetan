@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export default function AboutPage() {
   return (
-    <div className="container py-12 md:py-16 px-4">
+    <div className="container py-8 md:py-12 px-4">
       <div className="text-center mb-12">
         <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">
           Tentang Roemah Jumpoetan
@@ -24,7 +24,7 @@ export default function AboutPage() {
               className="object-cover"
             />
           </div>
-          <div className="p-8 md:p-12">
+          <div className="p-8 md:p-12 flex flex-col justify-center">
             <CardHeader className="p-0 mb-6">
               <CardTitle className="font-headline text-3xl font-bold">
                 Kisah di Balik Sehelai Kain
