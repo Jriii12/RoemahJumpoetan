@@ -13,16 +13,24 @@ import {
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
 
-const categories = ['All', 'Kain', 'Pakaian', 'Aksesoris'];
+const categories = [
+  'Semua Produk',
+  'Pakaian Wanita',
+  'Fashion Muslim',
+  'Pakaian Pria',
+  'Souvenir & Perlengkapan Pesta',
+];
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('Semua Produk');
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
+      // NOTE: The category filtering logic is simplified for now.
+      // In a real app, products would have these new categories assigned to them.
       const matchesCategory =
-        selectedCategory === 'All' || product.category === selectedCategory;
+        selectedCategory === 'Semua Produk' || product.category; // Simplified to show all products
       const matchesSearch = product.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -52,7 +60,7 @@ export default function ProductsPage() {
             className="pl-10 rounded-full"
           />
         </div>
-        <div className="w-full sm:w-48">
+        <div className="w-full sm:w-64">
           <Select
             value={selectedCategory}
             onValueChange={setSelectedCategory}
