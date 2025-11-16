@@ -57,8 +57,9 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border/50">
-        <div className="container mx-auto py-4 px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Roemah Jumpoetan. All Rights Reserved.
+        <div className="container mx-auto py-4 px-4 text-center text-sm text-muted-foreground flex justify-between items-center">
+          <span>© {new Date().getFullYear()} Roemah Jumpoetan. All Rights Reserved.</span>
+          <Link href="/admin/login" className="text-xs hover:text-primary">Admin</Link>
         </div>
       </div>
     </footer>
