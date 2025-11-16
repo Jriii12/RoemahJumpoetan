@@ -27,10 +27,8 @@ export default function ProductsPage() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      // NOTE: The category filtering logic is simplified for now.
-      // In a real app, products would have these new categories assigned to them.
       const matchesCategory =
-        selectedCategory === 'Semua Produk' || product.category; // Simplified to show all products
+        selectedCategory === 'Semua Produk' || product.category === selectedCategory;
       const matchesSearch = product.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
