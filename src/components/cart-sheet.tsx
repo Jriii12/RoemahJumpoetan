@@ -49,9 +49,9 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                   <div key={item.product.id} className="flex items-start gap-4">
                     <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-border">
                       <Image
-                        src={item.product.image.imageUrl}
+                        src={item.product.imageUrl}
                         alt={item.product.name}
-                        data-ai-hint={item.product.image.imageHint}
+                        data-ai-hint={item.product.imageHint}
                         fill
                         className="object-cover"
                       />

@@ -35,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Save } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Product } from '@/lib/data';
 
 const categories = [
   'Kain',
@@ -57,17 +58,6 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-type ProductData = {
-    name: string;
-    price: number;
-    category: string;
-    description: string;
-    image: {
-        imageUrl: string;
-        imageHint: string;
-    }
-}
-
 export default function EditProductPage({ params }: { params: { id: string } }) {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -79,7 +69,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     return doc(firestore, 'products', productId);
   }, [firestore, productId]);
 
-  const { data: productData, isLoading } = useDoc<ProductData>(productDocRef);
+  const { data: productData, isLoading } = useDoc<Omit<Product, 'id'>>(productDocRef);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -99,8 +89,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         price: productData.price,
         category: productData.category,
         description: productData.description,
-        imageUrl: productData.image.imageUrl,
-        imageHint: productData.image.imageHint,
+        imageUrl: productData.imageUrl,
+        imageHint: productData.imageHint,
       });
     }
   }, [productData, form]);
@@ -114,10 +104,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         price: data.price,
         category: data.category,
         description: data.description,
-        image: {
-            imageUrl: data.imageUrl,
-            imageHint: data.imageHint,
-        }
+        imageUrl: data.imageUrl,
+        imageHint: data.imageHint,
       });
       toast({
         title: 'Produk Diperbarui!',

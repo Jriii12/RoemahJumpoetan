@@ -82,10 +82,8 @@ export default function AddProductPage() {
         price: data.price,
         category: data.category,
         description: data.description,
-        image: {
-            imageUrl: data.imageUrl,
-            imageHint: data.imageHint,
-        }
+        imageUrl: data.imageUrl,
+        imageHint: data.imageHint,
       });
       toast({
         title: 'Produk Ditambahkan!',

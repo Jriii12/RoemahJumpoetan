@@ -35,16 +35,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-
-type Product = {
-  name: string;
-  price: number;
-  category: string;
-  image: {
-    imageUrl: string;
-    imageHint: string;
-  };
-};
+import type { Product } from '@/lib/data';
 
 export default function KelolaProdukPage() {
   const firestore = useFirestore();
@@ -56,7 +47,7 @@ export default function KelolaProdukPage() {
     return query(collection(firestore, 'products'), orderBy('name'));
   }, [firestore]);
 
-  const { data: products, isLoading } = useCollection<Product>(productsQuery);
+  const { data: products, isLoading } = useCollection<Omit<Product, 'id'>>(productsQuery);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -125,7 +116,7 @@ export default function KelolaProdukPage() {
                       <div className="flex items-center gap-4">
                         <div className="relative h-12 w-12 rounded-md overflow-hidden">
                            <Image
-                            src={product.image.imageUrl}
+                            src={product.imageUrl}
                             alt={product.name}
                             fill
                             className="object-cover"

@@ -31,9 +31,9 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardHeader className="p-0">
         <div className="aspect-[3/4] overflow-hidden relative">
           <Image
-            src={product.image.imageUrl}
+            src={product.imageUrl}
             alt={product.name}
-            data-ai-hint={product.image.imageHint}
+            data-ai-hint={product.imageHint}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
