@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,6 +33,8 @@ import { addDoc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Upload } from 'lucide-react';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const categories = [
   'Kain',
@@ -75,29 +76,32 @@ export default function AddProductPage() {
   const onSubmit = async (data: FormData) => {
     if (!firestore) return;
 
-    try {
-      const productsColRef = collection(firestore, 'products');
-      await addDoc(productsColRef, {
-        name: data.name,
-        price: data.price,
-        category: data.category,
-        description: data.description,
-        imageUrl: data.imageUrl,
-        imageHint: data.imageHint,
+    const productsColRef = collection(firestore, 'products');
+    const newProductData = {
+      name: data.name,
+      price: data.price,
+      category: data.category,
+      description: data.description,
+      imageUrl: data.imageUrl,
+      imageHint: data.imageHint,
+    };
+    
+    addDoc(productsColRef, newProductData)
+      .then(() => {
+        toast({
+          title: 'Produk Ditambahkan!',
+          description: `${data.name} berhasil disimpan.`,
+        });
+        router.push('/admin/products');
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: productsColRef.path,
+          operation: 'create',
+          requestResourceData: newProductData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
-      toast({
-        title: 'Produk Ditambahkan!',
-        description: `${data.name} berhasil disimpan.`,
-      });
-      router.push('/admin/products');
-    } catch (error) {
-      console.error('Error adding document: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Gagal Menambahkan Produk',
-        description: 'Terjadi kesalahan saat menyimpan produk.',
-      });
-    }
   };
 
   return (

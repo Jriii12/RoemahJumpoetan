@@ -36,6 +36,8 @@ import { useRouter } from 'next/navigation';
 import { Save } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Product } from '@/lib/data';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const categories = [
   'Kain',
@@ -98,28 +100,31 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const onSubmit = async (data: FormData) => {
     if (!productDocRef) return;
 
-    try {
-      await updateDoc(productDocRef, {
-        name: data.name,
-        price: data.price,
-        category: data.category,
-        description: data.description,
-        imageUrl: data.imageUrl,
-        imageHint: data.imageHint,
+    const updatedData = {
+      name: data.name,
+      price: data.price,
+      category: data.category,
+      description: data.description,
+      imageUrl: data.imageUrl,
+      imageHint: data.imageHint,
+    };
+
+    updateDoc(productDocRef, updatedData)
+      .then(() => {
+        toast({
+          title: 'Produk Diperbarui!',
+          description: `${data.name} berhasil diperbarui.`,
+        });
+        router.push('/admin/products');
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: productDocRef.path,
+          operation: 'update',
+          requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
-      toast({
-        title: 'Produk Diperbarui!',
-        description: `${data.name} berhasil diperbarui.`,
-      });
-      router.push('/admin/products');
-    } catch (error) {
-      console.error('Error updating document: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Gagal Memperbarui Produk',
-        description: 'Terjadi kesalahan saat menyimpan produk.',
-      });
-    }
   };
 
   return (

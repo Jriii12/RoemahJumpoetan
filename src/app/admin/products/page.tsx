@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useCollection, useFirestore, useMemoFirebase, type WithId } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
 import {
@@ -36,6 +36,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Product } from '@/lib/data';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 export default function KelolaProdukPage() {
   const firestore = useFirestore();
@@ -59,18 +61,20 @@ export default function KelolaProdukPage() {
   
   const handleDelete = async (productId: string) => {
     if(!firestore) return;
-    try {
-        await deleteDoc(doc(firestore, 'products', productId));
+    const productDocRef = doc(firestore, 'products', productId);
+    deleteDoc(productDocRef)
+      .then(() => {
         toast({
             title: "Produk berhasil dihapus"
         });
-    } catch(e) {
-        console.error(e);
-        toast({
-            variant: "destructive",
-            title: "Gagal menghapus produk"
-        })
-    }
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: productDocRef.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   }
 
   return (
