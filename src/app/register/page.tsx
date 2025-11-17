@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
+  signOut,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -86,14 +87,18 @@ export default function RegisterPage() {
         email: data.email,
       };
 
+      // Create user document in Firestore
       await setDoc(userRef, userData, { merge: true });
+
+      // Sign the user out immediately after registration
+      await signOut(auth);
 
       toast({
         title: 'Registrasi Berhasil',
-        description:
-          'Anda berhasil mendaftar dan langsung masuk.',
+        description: 'Akun Anda telah berhasil dibuat. Silakan login.',
       });
-      router.push('/');
+      // Redirect to the login page
+      router.push('/login');
     } catch (error: any) {
       let description = 'An unexpected error occurred. Please try again.';
       if (error.code === 'auth/email-already-in-use') {
