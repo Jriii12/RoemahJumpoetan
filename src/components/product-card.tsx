@@ -7,7 +7,9 @@ import { useCart } from '@/context/cart-context';
 import type { Product } from '@/lib/data';
 import { ShoppingCart } from 'lucide-react';
 import type { WithId } from '@/firebase';
-
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 type ProductCardProps = {
   product: WithId<Omit<Product, 'id'>>;
@@ -15,6 +17,22 @@ type ProductCardProps = {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { user } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleAddToCart = () => {
+    if (user) {
+      addToCart(product);
+    } else {
+      toast({
+        title: 'Harap Login Terlebih Dahulu',
+        description: 'Anda harus login untuk menambahkan produk ke keranjang.',
+        variant: 'destructive',
+      });
+      router.push('/login');
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -23,8 +41,6 @@ export function ProductCard({ product }: ProductCardProps) {
       minimumFractionDigits: 0,
     }).format(price);
   };
-
-  const productWithId = { ...product };
 
   return (
     <Card className="overflow-hidden flex flex-col h-full group bg-card border-border/50">
@@ -48,7 +64,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {formatPrice(product.price)}
         </p>
         <Button
-          onClick={() => addToCart(productWithId)}
+          onClick={handleAddToCart}
           variant="outline"
           size="icon"
           className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0 ml-2"
