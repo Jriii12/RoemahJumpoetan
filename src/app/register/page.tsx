@@ -35,6 +35,7 @@ const formSchema = z
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
     email: z.string().email('Invalid email address'),
+    phoneNumber: z.string().min(1, 'Phone number is required'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string(),
   })
@@ -57,6 +58,7 @@ export default function RegisterPage() {
       firstName: '',
       lastName: '',
       email: '',
+      phoneNumber: '',
       password: '',
       confirmPassword: '',
     },
@@ -85,6 +87,7 @@ export default function RegisterPage() {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
+        phoneNumber: data.phoneNumber,
       };
 
       // Create user document in Firestore
@@ -164,6 +167,23 @@ export default function RegisterPage() {
                       <Input
                         type="email"
                         placeholder="you@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nomor Telepon</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        placeholder="08123456789"
                         {...field}
                       />
                     </FormControl>
