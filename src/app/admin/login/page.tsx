@@ -24,7 +24,7 @@ export default function AdminLoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isUserLoading } = useUser();
+  const { isUserLoading } = useUser();
   const firestore = useFirestore();
 
   useEffect(() => {
@@ -37,24 +37,6 @@ export default function AdminLoginPage() {
       });
     }
   }, [searchParams, toast]);
-
-  useEffect(() => {
-    if (!isUserLoading && user && firestore) {
-      // User is already logged in, check their role
-      const checkRoleAndRedirect = async () => {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          if (userData.role === 'admin' || userData.role === 'owner') {
-            router.push('/admin/dashboard');
-          }
-        }
-      };
-      checkRoleAndRedirect();
-    }
-  }, [user, isUserLoading, firestore, router]);
-
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,8 +84,7 @@ export default function AdminLoginPage() {
     }
   };
   
-  // Don't render the form if the user is loading or already logged in and being redirected
-  if(isUserLoading || user) {
+  if(isUserLoading) {
      return (
        <div className="flex min-h-screen items-center justify-center bg-secondary">
           <p>Loading...</p>
