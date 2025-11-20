@@ -14,7 +14,7 @@
  * - /testimonials/{testimonialId}: Stores customer testimonials. Publicly readable, and now creatable by authenticated users.
  *
  * Key Security Decisions:
- * - User listing is disallowed.
+ * - User listing is disallowed for non-admins but allowed for admins.
  * - Public read access is granted for the products and testimonials collections.
  * - Authenticated users are now allowed to create testimonials.
  * - Write access to products remains restricted in this prototyping phase.
@@ -40,19 +40,21 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces strict user-ownership for user profiles. Only the authenticated user can read or write their own profile. The 'role' field is immutable by the user.
+     * @description Enforces strict user-ownership for user profiles. Only the authenticated user can read or write their own profile. Admins can list all users. The 'role' field is immutable by the user.
      * @path /users/{userId}
      * @allow (create) - User 'user_abc' can create their own profile if request.auth.uid == 'user_abc'.
      * @allow (get, delete) - User 'user_abc' can get or delete their profile if request.auth.uid == 'user_abc'.
+     * @allow (list) - Users with 'admin' or 'owner' role can list all user profiles.
      * @allow (update) - User 'user_abc' can update their profile, but cannot change their own 'role'.
      * @deny (create) - User 'user_xyz' cannot create a profile with ID 'user_abc'.
      * @deny (get, update, delete) - User 'user_xyz' cannot get, update, or delete the profile of 'user_abc'.
+     * @deny (list) - A non-admin user cannot list all profiles.
      * @deny (update) - User cannot change their own `role` field.
-     * @principle Enforces document ownership for all operations and protects sensitive fields.
+     * @principle Enforces document ownership for all operations and protects sensitive fields, while allowing admin access.
      */
     match /users/{userId} {
       allow get, delete: if isOwner(userId);
-      allow list: if false;
+      allow list: if isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       // User can update their profile, but not their role.
       allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
