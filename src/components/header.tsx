@@ -125,6 +125,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center justify-between px-4">
+        {/* Left Section */}
         <div className="flex items-center gap-2">
           <Sheet>
             <SheetTrigger asChild>
@@ -182,45 +183,45 @@ export function Header() {
             </span>
           </Link>
         </div>
+        
+        {/* Center Section - Desktop Navigation */}
+        <nav className="hidden md:flex flex-grow justify-center items-center space-x-6 text-sm font-medium">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                'transition-colors hover:text-primary/80 relative',
+                pathname === link.href ? 'text-primary' : 'text-primary/60'
+              )}
+            >
+              {link.label}
+              {pathname === link.href && (
+                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"></span>
+              )}
+            </Link>
+          ))}
+        </nav>
 
-        <div className="flex items-center gap-4">
-            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    'transition-colors hover:text-primary/80 relative',
-                    pathname === link.href ? 'text-primary' : 'text-primary/60'
-                  )}
-                >
-                  {link.label}
-                  {pathname === link.href && (
-                    <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"></span>
-                  )}
-                </Link>
-              ))}
-            </nav>
-
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-                    {cartCount}
-                  </span>
-                )}
-                <span className="sr-only">Shopping Cart</span>
-              </Button>
-              <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
-              
-              {isClient ? <UserAuthControl /> : <div className="h-9 w-28 animate-pulse rounded-full bg-muted"></div>}
-            </div>
+        {/* Right Section */}
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => setIsCartOpen(true)}
+          >
+            <ShoppingCart className="h-6 w-6" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                {cartCount}
+              </span>
+            )}
+            <span className="sr-only">Shopping Cart</span>
+          </Button>
+          <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
+          
+          {isClient ? <UserAuthControl /> : <div className="h-9 w-28 animate-pulse rounded-full bg-muted"></div>}
         </div>
       </div>
     </header>
