@@ -85,19 +85,6 @@
           "type": "string",
           "description": "URL of the product image.",
           "format": "uri"
-        },
-        "stock": {
-          "type": "number",
-          "description": "Available stock quantity of the product."
-        },
-        "status": {
-            "type": "string",
-            "description": "Stock status of the product",
-            "enum": ["tersedia", "hampir habis", "habis"]
-        },
-        "purchases": {
-            "type": "number",
-            "description": "Total number of purchases for the product."
         }
       },
       "required": [
@@ -106,10 +93,7 @@
         "description",
         "category",
         "price",
-        "imageUrl",
-        "stock",
-        "status",
-        "purchases"
+        "imageUrl"
       ]
     },
     "ShoppingCart": {
