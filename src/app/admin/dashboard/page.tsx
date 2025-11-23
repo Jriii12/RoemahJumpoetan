@@ -31,16 +31,11 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { AdminDonutChart } from '../components/charts';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, limit, query, orderBy, where } from 'firebase/firestore';
-import type { Product } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import React from 'react';
 import { cn } from '@/lib/utils';
-
-type ProductWithId = Product & { id: string };
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -92,28 +87,19 @@ const StockStatusBadge = ({ status }: { status: 'tersedia' | 'hampir habis' | 'h
 }
 
 export default function AdminDashboardPage() {
-  const firestore = useFirestore();
-
-  const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'products'));
-  }, [firestore]);
-
-  const { data: allProducts, isLoading: isLoadingAll } = useCollection<Product>(productsQuery);
-
   const bestSellers = [
     { id: '1', name: 'Kain Jumputan Merah', purchases: 120 },
     { id: '2', name: 'Gaun Pesta Jumputan', purchases: 95 },
     { id: '3', name: 'Kemeja Pria Jumputan', purchases: 80 },
     { id: '4', name: 'Selendang Sutra', purchases: 72 },
     { id: '5', name: 'Blouse Wanita Modern', purchases: 65 },
-  ]
+  ];
   const isLoadingBestSellers = false;
 
   const lowStockProducts = [
       {id: '1', name: 'Kain Jumputan Biru', stock: 8},
       {id: '2', name: 'Tas Pesta', stock: 5},
-  ]
+  ];
   const isLoadingLowStock = false;
   
   const getStockStatus = (stock: number): 'tersedia' | 'hampir habis' | 'habis' => {
