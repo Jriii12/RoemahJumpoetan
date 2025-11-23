@@ -20,6 +20,9 @@ export type Product = {
   description: string;
   imageUrl: string;
   imageHint: string;
+  stock: number;
+  status: 'tersedia' | 'hampir habis' | 'habis';
+  purchases: number;
 };
 
 export type Testimonial = {
