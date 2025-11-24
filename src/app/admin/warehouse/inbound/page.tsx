@@ -72,7 +72,7 @@ const initialPurchases: WithId<PurchasedMaterial>[] = [
     { id: 'seed1', name: 'kain', quantity: '100 meter', storeName: 'toko cemerlang', purchaseDate: new Date().toISOString().split('T')[0] },
     { id: 'seed2', name: 'pewarnaan zat sintesis', quantity: '5 kg', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
     { id: 'seed3', name: 'gambir pewarnaan alam', quantity: '10 kg', storeName: 'babat toman', purchaseDate: new Date().toISOString().split('T')[0] },
-    { id: 'seed4', name: 'pelembit kain', quantity: '2 liter', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
+    { id: 'seed4', name: 'pelembut kain', quantity: '2 liter', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
 ];
 
 const formatDate = (dateString: string) => {
@@ -100,6 +100,7 @@ export default function BarangMentahPage() {
 
   // State for purchase form
   const [purchaseName, setPurchaseName] = useState('');
+  const [newPurchaseName, setNewPurchaseName] = useState('');
   const [purchaseStore, setPurchaseStore] = useState('');
   const [purchaseQuantity, setPurchaseQuantity] = useState('');
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
@@ -142,6 +143,7 @@ export default function BarangMentahPage() {
   
   const resetPurchaseForm = () => {
     setPurchaseName('');
+    setNewPurchaseName('');
     setPurchaseStore('');
     setPurchaseQuantity('');
     setPurchaseDate(new Date().toISOString().split('T')[0]);
@@ -186,9 +188,7 @@ export default function BarangMentahPage() {
     e.preventDefault();
     if (!firestore) return;
     
-    const finalPurchaseName = purchaseName === 'addNew' 
-        ? (e.currentTarget.elements.namedItem('customName') as HTMLInputElement)?.value 
-        : purchaseName;
+    const finalPurchaseName = purchaseName === 'addNew' ? newPurchaseName : purchaseName;
 
     const purchaseData = {
       name: finalPurchaseName,
@@ -487,12 +487,17 @@ export default function BarangMentahPage() {
                 </SelectContent>
               </Select>
               {purchaseName === 'addNew' && !editingPurchase && (
-                <Input
-                  name="customName"
-                  placeholder="Ketik nama barang baru"
-                  className="mt-2"
-                  required
-                />
+                <div className='space-y-2 mt-2'>
+                  <Label htmlFor="customName">Nama Barang Baru</Label>
+                  <Input
+                    id="customName"
+                    name="customName"
+                    value={newPurchaseName}
+                    onChange={(e) => setNewPurchaseName(e.target.value)}
+                    placeholder="Ketik nama barang baru"
+                    required
+                  />
+                </div>
               )}
             </div>
              <div className="space-y-2">
