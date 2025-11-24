@@ -64,12 +64,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access, but restricts write access to admins only.
+     * @description Allows public read access, but restricts write access to admins only. Admins can list all products.
      * @path /products/{productId}
      */
     match /products/{productId} {
       allow get: if true;
-      allow list: if request.auth != null;
+      allow list: if isAdmin();
       allow write: if request.auth != null && isAdmin();
 
        /**
