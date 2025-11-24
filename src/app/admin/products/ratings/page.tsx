@@ -47,7 +47,12 @@ export default function RatingProdukPage() {
   }, [firestore]);
 
   const { data: fetchedRatings, isLoading: isLoadingRatings } = useCollection<Omit<ProductRating, 'id'>>(ratingsQuery);
-  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]));
+  
+  const productsCollectionRef = useMemoFirebase(() => {
+      if (!firestore) return null;
+      return collection(firestore, 'products');
+  }, [firestore]);
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsCollectionRef);
 
   React.useEffect(() => {
     if (isLoadingRatings || isLoadingProducts) {
@@ -63,12 +68,14 @@ export default function RatingProdukPage() {
 
     const ratingsWithProductInfo = fetchedRatings.map(rating => {
       // The path of a subcollection document is 'products/{productId}/ratings/{ratingId}'
+      // The ID from a collectionGroup query is the full path.
       const pathSegments = rating.id.split('/');
       const productId = pathSegments.length > 2 ? pathSegments[pathSegments.length - 3] : undefined;
       const product = productId ? productsMap.get(productId) : undefined;
       
       return {
         ...rating,
+        id: rating.id,
         productId,
         productName: product?.name || 'Unknown Product',
         productImageUrl: product?.imageUrl
@@ -141,7 +148,7 @@ export default function RatingProdukPage() {
                           <div className='flex items-center gap-3'>
                             {rating.productImageUrl && (
                                 <div className='relative h-10 w-10 rounded-md overflow-hidden'>
-                                    <Image src={rating.productImageUrl} alt={rating.productName || 'product'} fill className='object-cover' />
+                                    <Image src={rating.productImageUrl} alt={rating.productName || 'product'} fill className='object-cover' sizes="40px" />
                                 </div>
                             )}
                             <span className='font-medium'>{rating.productName}</span>
@@ -155,7 +162,7 @@ export default function RatingProdukPage() {
                   ))
               ) : (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-48 flex items-center justify-center text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
                         Belum ada rating yang diberikan.
                     </TableCell>
                 </TableRow>
