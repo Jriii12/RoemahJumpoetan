@@ -18,9 +18,9 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Phone, Search, ShoppingCart } from 'lucide-react';
+import { Phone, Search, ShoppingCart, Star } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, WithId, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc } from 'firebase/firestore';
 import type { Product } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
@@ -29,6 +29,10 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const categories = [
   'Semua Produk',
@@ -51,6 +55,10 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<WithId<Omit<Product, 'id'>> | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | undefined>();
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+
 
   const firestore = useFirestore();
   const { user } = useUser();
@@ -85,6 +93,8 @@ export default function ProductsPage() {
   const handleDetailClick = (product: WithId<Omit<Product, 'id'>>) => {
     setSelectedProduct(product);
     setSelectedSize(undefined); // Reset size when opening a new detail
+    setRating(0);
+    setReviewText('');
     setIsDetailOpen(true);
   };
   
@@ -118,6 +128,51 @@ export default function ProductsPage() {
         variant: 'destructive',
       });
       router.push('/login');
+    }
+  };
+
+  const handleRatingSubmit = async () => {
+    if (!firestore || !user || !selectedProduct) {
+        toast({
+            variant: 'destructive',
+            title: 'Gagal',
+            description: 'Anda harus login untuk memberi rating.',
+        });
+        return;
+    }
+    if (rating === 0) {
+        toast({
+            variant: 'destructive',
+            title: 'Gagal',
+            description: 'Silakan pilih rating bintang terlebih dahulu.',
+        });
+        return;
+    }
+
+    const ratingsColRef = collection(firestore, 'products', selectedProduct.id, 'ratings');
+    const newRatingData = {
+        userId: user.uid,
+        userName: user.displayName || 'Anonymous',
+        rating: rating,
+        comment: reviewText,
+        createdAt: new Date().toISOString(),
+    };
+
+    try {
+        await addDoc(ratingsColRef, newRatingData);
+        toast({
+            title: 'Terima Kasih!',
+            description: 'Rating Anda telah berhasil dikirimkan.',
+        });
+        setRating(0);
+        setReviewText('');
+    } catch (e) {
+        const permissionError = new FirestorePermissionError({
+            path: ratingsColRef.path,
+            operation: 'create',
+            requestResourceData: newRatingData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
     }
   };
 
@@ -191,17 +246,19 @@ export default function ProductsPage() {
       </div>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-3xl bg-card">
+        <DialogContent className="sm:max-w-4xl bg-card">
           {selectedProduct && (
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start'>
-                <div className='relative aspect-[3/4] rounded-lg overflow-hidden'>
-                     <Image
-                        src={selectedProduct.imageUrl}
-                        alt={selectedProduct.name}
-                        data-ai-hint={selectedProduct.imageHint}
-                        fill
-                        className="object-cover"
-                    />
+                <div className='flex flex-col gap-6'>
+                    <div className='relative aspect-[3/4] rounded-lg overflow-hidden'>
+                         <Image
+                            src={selectedProduct.imageUrl}
+                            alt={selectedProduct.name}
+                            data-ai-hint={selectedProduct.imageHint}
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
                 </div>
                 <div className='flex flex-col h-full pt-2 md:pt-4'>
                     <DialogHeader>
@@ -246,7 +303,33 @@ export default function ProductsPage() {
                         </DialogDescription>
                     </div>
 
-                     <div className="flex flex-col gap-2 mt-auto">
+                    <div className="mt-4 pt-4 border-t">
+                        <h4 className="font-semibold mb-2">Beri Rating & Ulasan</h4>
+                         <div className="flex items-center gap-1 mb-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                key={star}
+                                className={cn(
+                                    'h-6 w-6 cursor-pointer transition-colors',
+                                    (hoverRating || rating) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                                )}
+                                onClick={() => setRating(star)}
+                                onMouseEnter={() => setHoverRating(star)}
+                                onMouseLeave={() => setHoverRating(0)}
+                                />
+                            ))}
+                        </div>
+                        <Textarea
+                            placeholder="Tulis ulasan Anda di sini..."
+                            value={reviewText}
+                            onChange={(e) => setReviewText(e.target.value)}
+                            className="mb-2"
+                        />
+                        <Button onClick={handleRatingSubmit} size="sm">Kirim Ulasan</Button>
+                    </div>
+
+
+                     <div className="flex flex-col gap-2 mt-auto pt-4">
                         <Button size="lg" onClick={handleAddToCartFromDetail}>
                           <ShoppingCart className="mr-2 h-5 w-5" />
                           Tambah ke Keranjang
