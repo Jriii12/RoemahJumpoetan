@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import Image from 'next/image';
@@ -40,6 +40,17 @@ import { useToast } from '@/hooks/use-toast';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
+type Order = {
+    products: { id: string; quantity: number; }[];
+    status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+}
+
+const getStockStatus = (stock: number): 'tersedia' | 'hampir habis' | 'habis' => {
+    if (stock <= 0) return 'habis';
+    if (stock < 10) return 'hampir habis';
+    return 'tersedia';
+}
+
 const StockStatusBadge = ({ status }: { status: 'tersedia' | 'hampir habis' | 'habis' }) => {
     const variants = {
         'tersedia': 'bg-green-500/20 text-green-500 border-green-500/50',
@@ -47,12 +58,6 @@ const StockStatusBadge = ({ status }: { status: 'tersedia' | 'hampir habis' | 'h
         'habis': 'bg-red-500/20 text-red-500 border-red-500/50'
     }
     return <Badge variant="outline" className={cn('capitalize', variants[status])}>{status}</Badge>
-}
-
-const getStockStatus = (stock: number): 'tersedia' | 'hampir habis' | 'habis' => {
-    if (stock <= 0) return 'habis';
-    if (stock < 10) return 'hampir habis';
-    return 'tersedia';
 }
 
 export default function BarangJadiPage() {
@@ -67,7 +72,48 @@ export default function BarangJadiPage() {
     return query(collection(firestore, 'products'), orderBy('name'));
   }, [firestore]);
 
-  const { data: products, isLoading } = useCollection<Product>(productsQuery);
+  const ordersQuery = useMemoFirebase(() => {
+      if(!firestore) return null;
+      return query(collection(firestore, 'orders'));
+  }, [firestore]);
+
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
+  const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
+
+  const stockData = useMemo(() => {
+    if (!products || !orders) return [];
+
+    const productStockMap = new Map<string, { product: WithId<Product>; stockIn: number; stockOut: number; stockFinal: number; }>();
+
+    products.forEach(p => {
+        const stockFinal = p.stock || 0;
+        productStockMap.set(p.id, {
+            product: p,
+            stockIn: 0, // will be calculated later
+            stockOut: 0,
+            stockFinal: stockFinal,
+        });
+    });
+
+    orders.forEach(order => {
+        // Only count sales from non-cancelled orders
+        if (order.status !== 'Cancelled') {
+            order.products.forEach(item => {
+                if (productStockMap.has(item.id)) {
+                    const current = productStockMap.get(item.id)!;
+                    current.stockOut += item.quantity;
+                }
+            });
+        }
+    });
+
+    productStockMap.forEach((value) => {
+        value.stockIn = value.stockFinal + value.stockOut;
+    });
+
+    return Array.from(productStockMap.values());
+
+  }, [products, orders]);
   
   const handleEditClick = (product: WithId<Product>) => {
     setEditingProduct(product);
@@ -99,6 +145,8 @@ export default function BarangJadiPage() {
       });
   };
 
+  const isLoading = isLoadingProducts || isLoadingOrders;
+
   return (
     <>
       <div>
@@ -109,17 +157,18 @@ export default function BarangJadiPage() {
           <CardHeader>
             <CardTitle>Stok Produk Jadi</CardTitle>
             <CardDescription>
-              Berikut adalah daftar stok untuk semua produk jadi yang tersedia.
+              Berikut adalah rincian pergerakan stok untuk semua produk jadi yang tersedia.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[400px]">Produk</TableHead>
-                  <TableHead>Kategori</TableHead>
+                  <TableHead className="w-[300px]">Produk</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Stok Tersedia</TableHead>
+                  <TableHead>Stok Masuk</TableHead>
+                  <TableHead>Stok Keluar</TableHead>
+                  <TableHead>Total Akhir Stok</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -127,15 +176,11 @@ export default function BarangJadiPage() {
                 {isLoading ? (
                   Array.from({length: 5}).map((_, i) => (
                       <TableRow key={i}>
-                          <TableCell><Skeleton className='h-10 w-full' /></TableCell>
-                          <TableCell><Skeleton className='h-10 w-full' /></TableCell>
-                          <TableCell><Skeleton className='h-10 w-full' /></TableCell>
-                          <TableCell><Skeleton className='h-10 w-full' /></TableCell>
-                          <TableCell><Skeleton className='h-10 w-full' /></TableCell>
+                          <TableCell colSpan={6}><Skeleton className='h-10 w-full' /></TableCell>
                       </TableRow>
                   ))
-                ) : products && products.length > 0 ? (
-                  products.map((product) => (
+                ) : stockData && stockData.length > 0 ? (
+                  stockData.map(({ product, stockIn, stockOut, stockFinal }) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-4">
@@ -151,11 +196,12 @@ export default function BarangJadiPage() {
                           <span>{product.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{product.category}</TableCell>
                       <TableCell>
-                          <StockStatusBadge status={getStockStatus(product.stock || 0)} />
+                          <StockStatusBadge status={getStockStatus(stockFinal)} />
                       </TableCell>
-                      <TableCell className="font-bold">{product.stock || 0}</TableCell>
+                      <TableCell>{stockIn}</TableCell>
+                      <TableCell>{stockOut}</TableCell>
+                      <TableCell className="font-bold">{stockFinal}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(product)}>
                             <Pencil className="h-4 w-4" />
@@ -165,7 +211,7 @@ export default function BarangJadiPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Belum ada produk.
                     </TableCell>
                   </TableRow>
