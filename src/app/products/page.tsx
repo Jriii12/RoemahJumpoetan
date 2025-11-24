@@ -17,12 +17,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Search } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
+import { Button } from '@/components/ui/button';
+import { Phone, Search, ShoppingCart } from 'lucide-react';
+import { useCollection, useFirestore, useMemoFirebase, WithId, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
+import { useCart } from '@/context/cart-context';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const categories = [
   'Semua Produk',
@@ -44,6 +48,10 @@ export default function ProductsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const firestore = useFirestore();
+  const { user } = useUser();
+  const { addToCart } = useCart();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -78,6 +86,22 @@ export default function ProductsPage() {
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  const handleAddToCartFromDetail = () => {
+    if (!selectedProduct) return;
+
+    if (user) {
+      addToCart(selectedProduct);
+      setIsDetailOpen(false);
+    } else {
+      toast({
+        title: 'Harap Login Terlebih Dahulu',
+        description: 'Anda harus login untuk menambahkan produk ke keranjang.',
+        variant: 'destructive',
+      });
+      router.push('/login');
+    }
   };
 
   return (
@@ -164,15 +188,15 @@ export default function ProductsPage() {
                 </div>
                 <div className='flex flex-col h-full pt-2 md:pt-4'>
                     <DialogHeader>
-                        <DialogTitle className='font-headline text-2xl md:text-3xl mb-2'>{selectedProduct.name}</DialogTitle>
-                         <div className='flex items-center justify-between'>
+                        <DialogTitle className='font-headline text-2xl md:text-3xl mb-2 text-left'>{selectedProduct.name}</DialogTitle>
+                         <div className='flex items-center justify-between text-left'>
                             <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
                             <p className="font-bold text-primary text-xl">
                                 {formatPrice(selectedProduct.price)}
                             </p>
                          </div>
                     </DialogHeader>
-                    <div className='flex-grow my-4'>
+                    <div className='flex-grow my-4 text-left'>
                         <DialogDescription asChild>
                             <ul className="list-disc list-inside space-y-2 text-base text-muted-foreground leading-relaxed">
                             {selectedProduct.description.split('\n').map((line, index) => (
@@ -181,6 +205,18 @@ export default function ProductsPage() {
                             </ul>
                         </DialogDescription>
                     </div>
+                     <div className="flex flex-col gap-2 mt-auto">
+                        <Button size="lg" onClick={handleAddToCartFromDetail}>
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                          Tambah ke Keranjang
+                        </Button>
+                        <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
+                          <Button variant="outline" size="lg" className="w-full">
+                            <Phone className="mr-2 h-5 w-5" />
+                            Hubungi Admin
+                          </Button>
+                        </a>
+                      </div>
                 </div>
             </div>
           )}
