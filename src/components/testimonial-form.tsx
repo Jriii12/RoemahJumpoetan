@@ -14,6 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 const testimonialSchema = z.object({
   comment: z.string().min(10, 'Ulasan minimal 10 karakter').max(500, 'Ulasan maksimal 500 karakter'),
@@ -47,27 +50,29 @@ export function TestimonialForm() {
     }
 
     const testimonialsColRef = collection(firestore, 'testimonials');
-
-    try {
-      await addDoc(testimonialsColRef, {
+    const newTestimonialData = {
         userId: user.uid,
         text: data.comment,
         rating: data.rating,
         dateCreated: serverTimestamp(),
+      };
+
+    addDoc(testimonialsColRef, newTestimonialData)
+      .then(() => {
+        toast({
+          title: 'Terima Kasih!',
+          description: 'Ulasan Anda telah berhasil dikirim.',
+        });
+        form.reset();
+      })
+      .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+          path: testimonialsColRef.path,
+          operation: 'create',
+          requestResourceData: newTestimonialData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
-      toast({
-        title: 'Terima Kasih!',
-        description: 'Ulasan Anda telah berhasil dikirim.',
-      });
-      form.reset();
-    } catch (error) {
-      console.error('Error submitting testimonial:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Gagal Mengirim',
-        description: 'Terjadi kesalahan saat mengirim ulasan Anda.',
-      });
-    }
   };
 
   return (
