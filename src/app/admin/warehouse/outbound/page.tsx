@@ -85,18 +85,18 @@ export default function BarangJadiPage() {
 
     const productStockMap = new Map<string, { product: WithId<Product>; stockIn: number; stockOut: number; stockFinal: number; }>();
 
+    // Initialize map with current stock from products
     products.forEach(p => {
-        const stockFinal = p.stock || 0;
         productStockMap.set(p.id, {
             product: p,
-            stockIn: 0, // will be calculated later
+            stockIn: 0, 
             stockOut: 0,
-            stockFinal: stockFinal,
+            stockFinal: p.stock || 0,
         });
     });
 
+    // Calculate stock out from non-cancelled orders
     orders.forEach(order => {
-        // Only count sales from non-cancelled orders
         if (order.status !== 'Cancelled') {
             order.products.forEach(item => {
                 if (productStockMap.has(item.id)) {
@@ -107,6 +107,7 @@ export default function BarangJadiPage() {
         }
     });
 
+    // Calculate stock in based on final and out
     productStockMap.forEach((value) => {
         value.stockIn = value.stockFinal + value.stockOut;
     });
