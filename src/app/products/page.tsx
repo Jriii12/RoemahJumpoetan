@@ -173,8 +173,12 @@ export default function ProductsPage() {
                          </div>
                     </DialogHeader>
                     <div className='flex-grow my-4'>
-                        <DialogDescription className='text-base text-muted-foreground text-justify leading-relaxed'>
-                            {selectedProduct.description}
+                        <DialogDescription asChild>
+                            <ul className="list-disc list-inside space-y-2 text-base text-muted-foreground leading-relaxed">
+                            {selectedProduct.description.split('\n').map((line, index) => (
+                                line.trim() && <li key={index}>{line}</li>
+                            ))}
+                            </ul>
                         </DialogDescription>
                     </div>
                 </div>
