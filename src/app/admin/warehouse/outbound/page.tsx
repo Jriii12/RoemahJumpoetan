@@ -219,8 +219,8 @@ export default function BarangJadiPage() {
                     </TableRow>
                   ))
                 ) : products && products.length > 0 ? (
-                  products.map((item, index) => (
-                    <TableRow key={index}>
+                  products.map((item) => (
+                    <TableRow key={item.id}>
                       <TableCell className='font-medium'>{item.name}</TableCell>
                       <TableCell>{item.category}</TableCell>
                       <TableCell className='font-bold text-right'>{item.stock || 0}</TableCell>
