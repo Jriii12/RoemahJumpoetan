@@ -23,6 +23,8 @@ import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/lib/data';
 import Image from 'next/image';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type ProductRating = {
   userId: string;
@@ -47,7 +49,17 @@ export default function RatingProdukPage() {
       setIsLoading(true);
 
       try {
-        const productsSnapshot = await getDocs(collection(firestore, 'products'));
+        const productsCollectionRef = collection(firestore, 'products');
+        const productsSnapshot = await getDocs(productsCollectionRef).catch(err => {
+            const permissionError = new FirestorePermissionError({
+              path: productsCollectionRef.path,
+              operation: 'list',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            // Return a resolved promise with an empty snapshot to prevent further errors
+            return Promise.resolve({ docs: [] as any[] });
+        });
+        
         const productsData = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as WithId<Product>[];
         
         let collectedRatings: WithId<ProductRating>[] = [];
@@ -77,8 +89,8 @@ export default function RatingProdukPage() {
         setAllRatings(collectedRatings);
 
       } catch (error) {
+        // This catch is for unexpected errors during the process, not permission errors which are handled inside.
         console.error("Error fetching ratings:", error);
-        // Optionally set an error state here
       } finally {
         setIsLoading(false);
       }
