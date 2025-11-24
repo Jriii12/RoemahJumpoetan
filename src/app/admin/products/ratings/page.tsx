@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useFirestore, useMemoFirebase, useCollection, WithId } from '@/firebase';
-import { collection, query, orderBy, limit, getDocs, collectionGroup } from 'firebase/firestore';
+import { useFirestore, useCollection, WithId } from '@/firebase';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -30,9 +30,9 @@ type ProductRating = {
   rating: number;
   comment: string;
   createdAt: string;
-  productId?: string; // Will be added when flattening
-  productName?: string; // Will be added when flattening
-  productImageUrl?: string; // Will be added when flattening
+  productId?: string;
+  productName?: string;
+  productImageUrl?: string;
 };
 
 export default function RatingProdukPage() {
@@ -40,53 +40,52 @@ export default function RatingProdukPage() {
   const [allRatings, setAllRatings] = React.useState<WithId<ProductRating>[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // Query across all 'ratings' subcollections in the entire database
-  const ratingsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collectionGroup(firestore, 'ratings'), orderBy('createdAt', 'desc'));
-  }, [firestore]);
-
-  const { data: fetchedRatings, isLoading: isLoadingRatings } = useCollection<Omit<ProductRating, 'id'>>(ratingsQuery);
-  
-  const productsCollectionRef = useMemoFirebase(() => {
-      if (!firestore) return null;
-      return collection(firestore, 'products');
-  }, [firestore]);
-  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsCollectionRef);
-
+  // Fetch all ratings using a more robust method without collectionGroup
   React.useEffect(() => {
-    if (isLoadingRatings || isLoadingProducts) {
+    const fetchAllRatings = async () => {
+      if (!firestore) return;
       setIsLoading(true);
-      return;
-    }
-    if (!fetchedRatings || !products) {
-       setIsLoading(false);
-       return;
-    }
 
-    const productsMap = new Map(products.map(p => [p.id, p]));
+      try {
+        const productsSnapshot = await getDocs(collection(firestore, 'products'));
+        const productsData = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as WithId<Product>[];
+        
+        let collectedRatings: WithId<ProductRating>[] = [];
 
-    const ratingsWithProductInfo = fetchedRatings.map(rating => {
-      // The path of a subcollection document is 'products/{productId}/ratings/{ratingId}'
-      // The ID from a collectionGroup query is the full path.
-      const pathSegments = rating.id.split('/');
-      const productId = pathSegments.length > 2 ? pathSegments[pathSegments.length - 3] : undefined;
-      const product = productId ? productsMap.get(productId) : undefined;
-      
-      return {
-        ...rating,
-        id: rating.id,
-        productId,
-        productName: product?.name || 'Unknown Product',
-        productImageUrl: product?.imageUrl
-      };
-    }).filter(r => r.productId); // Filter out any ratings that couldn't be mapped to a product
+        for (const product of productsData) {
+          const ratingsQuery = query(collection(firestore, `products/${product.id}/ratings`), orderBy('createdAt', 'desc'));
+          const ratingsSnapshot = await getDocs(ratingsQuery);
+          
+          const productRatings = ratingsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...(doc.data() as Omit<ProductRating, 'id'>),
+            productId: product.id,
+            productName: product.name,
+            productImageUrl: product.imageUrl,
+          }));
 
-    setAllRatings(ratingsWithProductInfo as WithId<ProductRating>[]);
-    setIsLoading(false);
+          collectedRatings = [...collectedRatings, ...productRatings];
+        }
 
-  }, [fetchedRatings, products, isLoadingRatings, isLoadingProducts]);
+        // Sort all ratings globally by date
+        collectedRatings.sort((a, b) => {
+            const dateA = (a.createdAt as any).toDate ? (a.createdAt as any).toDate() : new Date(a.createdAt);
+            const dateB = (b.createdAt as any).toDate ? (b.createdAt as any).toDate() : new Date(b.createdAt);
+            return dateB.getTime() - dateA.getTime();
+        });
+        
+        setAllRatings(collectedRatings);
 
+      } catch (error) {
+        console.error("Error fetching ratings:", error);
+        // Optionally set an error state here
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllRatings();
+  }, [firestore]);
   
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
