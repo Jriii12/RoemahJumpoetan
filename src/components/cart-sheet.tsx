@@ -112,14 +112,15 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
                 <SheetClose asChild>
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full rounded-full"
-                    style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}
-                  >
-                    Proceed to Checkout
-                  </Button>
+                  <Link href="/checkout" className='w-full'>
+                    <Button
+                      size="lg"
+                      className="w-full rounded-full"
+                      style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}
+                    >
+                      Proceed to Checkout
+                    </Button>
+                  </Link>
                 </SheetClose>
               </div>
             </SheetFooter>
