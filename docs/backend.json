@@ -303,6 +303,34 @@
         "usageDate": { "type": "string", "format": "date" }
       },
       "required": ["id", "name", "quantity", "purpose", "usageDate"]
+    },
+    "InboundFinishedGood": {
+      "title": "Inbound Finished Good",
+      "type": "object",
+      "description": "Represents a record of finished goods entering the warehouse.",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string", "description": "The ID of the product." },
+        "productName": { "type": "string", "description": "The name of the product." },
+        "quantity": { "type": "number", "description": "The quantity of items entering." },
+        "inboundDate": { "type": "string", "format": "date" },
+        "notes": { "type": "string", "description": "Optional notes for the transaction." }
+      },
+      "required": ["id", "productId", "productName", "quantity", "inboundDate"]
+    },
+    "OutboundFinishedGood": {
+      "title": "Outbound Finished Good",
+      "type": "object",
+      "description": "Represents a record of finished goods leaving the warehouse for non-sale purposes.",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string", "description": "The ID of the product." },
+        "productName": { "type": "string", "description": "The name of the product." },
+        "quantity": { "type": "number", "description": "The quantity of items leaving." },
+        "outboundDate": { "type": "string", "format": "date" },
+        "purpose": { "type": "string", "description": "The reason for the outbound transaction." }
+      },
+      "required": ["id", "productId", "productName", "quantity", "outboundDate", "purpose"]
     }
   },
   "auth": {
@@ -444,6 +472,24 @@
           "schema": { "$ref": "#/backend/entities/UsedRawMaterial" },
           "description": "Stores records of used raw materials. Accessible by admin/warehouse staff.",
           "params": [{ "name": "usageId", "description": "The unique ID of the usage record." }]
+        }
+      },
+      {
+        "path": "/inboundFinishedGoods/{inboundId}",
+        "definition": {
+          "entityName": "InboundFinishedGood",
+          "schema": { "$ref": "#/backend/entities/InboundFinishedGood" },
+          "description": "Stores records of finished goods entering the warehouse. Accessible by admin/warehouse staff.",
+          "params": [{ "name": "inboundId", "description": "The unique ID of the inbound record." }]
+        }
+      },
+      {
+        "path": "/outboundFinishedGoods/{outboundId}",
+        "definition": {
+          "entityName": "OutboundFinishedGood",
+          "schema": { "$ref": "#/backend/entities/OutboundFinishedGood" },
+          "description": "Stores records of finished goods leaving the warehouse. Accessible by admin/warehouse staff.",
+          "params": [{ "name": "outboundId", "description": "The unique ID of the outbound record." }]
         }
       }
     ],

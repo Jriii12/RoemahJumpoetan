@@ -15,6 +15,8 @@
  * - /testimonials/{testimonialId}: Stores customer testimonials. Publicly readable, and now creatable by authenticated users.
  * - /purchasedRawMaterials/{materialId}: Stores raw material purchases. Writable by admins.
  * - /usedRawMaterials/{usageId}: Stores raw material usages. Writable by admins.
+ * - /inboundFinishedGoods/{inboundId}: Stores records of finished goods entering the warehouse. Writable by admins.
+ * - /outboundFinishedGoods/{outboundId}: Stores records of finished goods leaving the warehouse for non-sale purposes. Writable by admins.
  *
  * Key Security Decisions:
  * - User listing is disallowed for non-admins but allowed for admins.
@@ -105,7 +107,7 @@ service cloud.firestore {
      */
     match /orders/{orderId} {
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read, update, list: if isAdmin();
+      allow read, list, update: if isAdmin();
     }
 
     /**
@@ -127,6 +129,18 @@ service cloud.firestore {
     }
     
     match /usedRawMaterials/{usageId} {
+        allow read, write: if isAdmin();
+    }
+    
+    /**
+     * @description Admin-only access for finished goods records.
+     * @path /inboundFinishedGoods/{inboundId}, /outboundFinishedGoods/{outboundId}
+     */
+    match /inboundFinishedGoods/{inboundId} {
+        allow read, write: if isAdmin();
+    }
+
+    match /outboundFinishedGoods/{outboundId} {
         allow read, write: if isAdmin();
     }
   }

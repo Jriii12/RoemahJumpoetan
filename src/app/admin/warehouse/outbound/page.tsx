@@ -1,9 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
-import Image from 'next/image';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -17,8 +14,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,161 +26,274 @@ import {
   DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { Product } from '@/lib/data';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Minus, Pencil } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
+import { collection, addDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Product } from '@/lib/data';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
-const getStockStatus = (stock: number): 'tersedia' | 'hampir habis' | 'habis' => {
-    if (stock <= 0) return 'habis';
-    if (stock < 10) return 'hampir habis';
-    return 'tersedia';
-}
+type InboundRecord = {
+  productId: string;
+  productName: string;
+  quantity: number;
+  inboundDate: string;
+  notes: string;
+};
 
-const StockStatusBadge = ({ status }: { status: 'tersedia' | 'hampir habis' | 'habis' }) => {
-    const variants = {
-        'tersedia': 'bg-green-500/20 text-green-500 border-green-500/50',
-        'hampir habis': 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50',
-        'habis': 'bg-red-500/20 text-red-500 border-red-500/50'
-    }
-    return <Badge variant="outline" className={cn('capitalize', variants[status])}>{status}</Badge>
-}
+type OutboundRecord = {
+  productId: string;
+  productName: string;
+  quantity: number;
+  outboundDate: string;
+  purpose: string;
+};
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return '-';
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString('id-ID', options);
+};
+
+const parseQuantity = (quantity: number | string): number => {
+  if (typeof quantity === 'number') return quantity;
+  return parseInt(quantity, 10) || 0;
+};
 
 export default function BarangJadiPage() {
-  const firestore = useFirestore();
+  const [isInboundDialogOpen, setInboundDialogOpen] = useState(false);
+  const [isOutboundDialogOpen, setOutboundDialogOpen] = useState(false);
   const { toast } = useToast();
-  
-  const [isDialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'add' | 'subtract' | null>(null);
-  const [editingProduct, setEditingProduct] = useState<WithId<Product> | null>(null);
-  const [stockChange, setStockChange] = useState(0);
-  const [note, setNote] = useState('');
+  const firestore = useFirestore();
 
+  // Firestore hooks
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'), orderBy('name'));
   }, [firestore]);
-
   const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
 
-  const handleOpenDialog = (product: WithId<Product>, mode: 'add' | 'subtract') => {
-    setEditingProduct(product);
-    setDialogMode(mode);
-    setStockChange(0);
-    setNote('');
-    setDialogOpen(true);
-  };
+  const inboundQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'inboundFinishedGoods'), orderBy('inboundDate', 'desc'));
+  }, [firestore]);
+  const { data: inboundRecords, isLoading: isLoadingInbound } = useCollection<InboundRecord>(inboundQuery);
+
+  const outboundQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'outboundFinishedGoods'), orderBy('outboundDate', 'desc'));
+  }, [firestore]);
+  const { data: outboundRecords, isLoading: isLoadingOutbound } = useCollection<OutboundRecord>(outboundQuery);
   
-  const handleSaveStock = () => {
-    if (!firestore || !editingProduct || !dialogMode || stockChange <= 0) {
-        toast({
-            variant: 'destructive',
-            title: 'Input tidak valid',
-            description: 'Jumlah stok harus lebih besar dari 0.'
-        });
+  const handleInboundFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firestore) return;
+    const formData = new FormData(e.currentTarget);
+    const selectedProduct = products?.find(p => p.id === formData.get('productId'));
+
+    if (!selectedProduct) {
+        toast({ variant: 'destructive', title: 'Produk harus dipilih' });
         return;
+    }
+
+    const newInboundData: Omit<InboundRecord, 'id'> = {
+      productId: selectedProduct.id,
+      productName: selectedProduct.name,
+      quantity: parseQuantity(formData.get('quantity') as string),
+      inboundDate: formData.get('inboundDate') as string,
+      notes: formData.get('notes') as string,
+    };
+    
+    const inboundColRef = collection(firestore, 'inboundFinishedGoods');
+    addDoc(inboundColRef, newInboundData).then(() => {
+      toast({ title: 'Barang masuk berhasil dicatat.' });
+      setInboundDialogOpen(false);
+    }).catch(err => {
+      const permissionError = new FirestorePermissionError({ path: inboundColRef.path, operation: 'create', requestResourceData: newInboundData });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+  };
+
+  const handleOutboundFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firestore) return;
+    const formData = new FormData(e.currentTarget);
+    const selectedProduct = products?.find(p => p.id === formData.get('productId'));
+
+    if (!selectedProduct) {
+        toast({ variant: 'destructive', title: 'Produk harus dipilih' });
+        return;
+    }
+
+    const newOutboundData: Omit<OutboundRecord, 'id'> = {
+      productId: selectedProduct.id,
+      productName: selectedProduct.name,
+      quantity: parseQuantity(formData.get('quantity') as string),
+      outboundDate: formData.get('outboundDate') as string,
+      purpose: formData.get('purpose') as string,
     };
 
-    const productDocRef = doc(firestore, 'products', editingProduct.id);
-    const amountToChange = dialogMode === 'add' ? increment(stockChange) : increment(-stockChange);
-    
-    updateDoc(productDocRef, { stock: amountToChange })
-      .then(() => {
-        toast({
-          title: 'Stok Berhasil Diperbarui',
-          description: `Stok untuk ${editingProduct.name} telah diubah.`,
-        });
-        setDialogOpen(false);
-      })
-      .catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: productDocRef.path,
-          operation: 'update',
-          requestResourceData: { stock: `increment(${dialogMode === 'add' ? stockChange : -stockChange})` },
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    const outboundColRef = collection(firestore, 'outboundFinishedGoods');
+    addDoc(outboundColRef, newOutboundData).then(() => {
+      toast({ title: 'Barang keluar berhasil dicatat.' });
+      setOutboundDialogOpen(false);
+    }).catch(err => {
+      const permissionError = new FirestorePermissionError({ path: outboundColRef.path, operation: 'create', requestResourceData: newOutboundData });
+      errorEmitter.emit('permission-error', permissionError);
+    });
   };
+  
+  const finalStock = useMemo(() => {
+    if (!products) return [];
 
-  const isLoading = isLoadingProducts;
+    const stockMap = new Map<string, { name: string; final: number }>();
+    
+    products.forEach(p => {
+        stockMap.set(p.id, { name: p.name, final: p.stock || 0 });
+    });
+
+    return Array.from(stockMap.values());
+  }, [products]);
+
+
+  const isLoading = isLoadingProducts || isLoadingInbound || isLoadingOutbound;
 
   return (
     <>
       <div className="space-y-8">
-        <h1 className="text-2xl font-bold">Gudang - Stok Produk Jadi</h1>
+        <h1 className="text-2xl font-bold">Gudang - Barang Jadi</h1>
 
-        {/* Stok Akhir Table */}
         <Card>
           <CardHeader>
             <CardTitle>Stok Akhir Produk Jadi</CardTitle>
-            <CardDescription>
-              Kelola inventaris produk yang tersedia di gudang. Tambah stok untuk barang yang baru selesai diproduksi atau kurangi untuk keperluan lain.
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[300px]">Produk</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Jumlah Stok</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead>Nama Produk</TableHead>
+                  <TableHead className="text-right">Stok Akhir</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  Array.from({length: 5}).map((_, i) => (
-                      <TableRow key={i}>
-                          <TableCell colSpan={5}><Skeleton className='h-10 w-full' /></TableCell>
-                      </TableRow>
+                {isLoadingProducts ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={2}><Skeleton className="h-8 w-full" /></TableCell>
+                    </TableRow>
                   ))
-                ) : products && products.length > 0 ? (
-                  products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-4">
-                          <div className="relative h-12 w-12 rounded-md overflow-hidden">
-                             <Image
-                              src={product.imageUrl}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                              sizes='48px'
-                            />
-                          </div>
-                          <span>{product.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>
-                          <StockStatusBadge status={getStockStatus(product.stock || 0)} />
-                      </TableCell>
-                      <TableCell className="font-bold">{product.stock || 0}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="outline" size="sm" className="mr-2" onClick={() => handleOpenDialog(product, 'add')}>
-                            <Plus className="h-4 w-4 mr-1" />
-                            Masuk
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleOpenDialog(product, 'subtract')}>
-                            <Minus className="h-4 w-4 mr-1" />
-                            Keluar
-                        </Button>
-                      </TableCell>
+                ) : finalStock.length > 0 ? (
+                  finalStock.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className='font-medium'>{item.name}</TableCell>
+                      <TableCell className='font-bold text-right'>{item.final}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      Belum ada data produk.
-                    </TableCell>
+                    <TableCell colSpan={2} className='h-24 text-center'>Belum ada data stok.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Riwayat Barang Masuk (Produk Jadi)</CardTitle>
+              <Button onClick={() => setInboundDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Catat Barang Masuk
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama Produk</TableHead>
+                  <TableHead>Jumlah</TableHead>
+                  <TableHead>Tanggal Masuk</TableHead>
+                  <TableHead>Catatan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoadingInbound ? (
+                  Array.from({ length: 2 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : inboundRecords && inboundRecords.length > 0 ? (
+                  inboundRecords.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium">{record.productName}</TableCell>
+                      <TableCell>{record.quantity}</TableCell>
+                      <TableCell>{formatDate(record.inboundDate)}</TableCell>
+                      <TableCell>{record.notes || '-'}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className='h-24 text-center'>Belum ada riwayat barang masuk.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Riwayat Barang Keluar (Produk Jadi)</CardTitle>
+              <Button onClick={() => setOutboundDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Catat Barang Keluar
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama Produk</TableHead>
+                  <TableHead>Jumlah</TableHead>
+                  <TableHead>Tanggal Keluar</TableHead>
+                  <TableHead>Keperluan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoadingOutbound ? (
+                  Array.from({ length: 2 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : outboundRecords && outboundRecords.length > 0 ? (
+                  outboundRecords.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium">{record.productName}</TableCell>
+                      <TableCell>{record.quantity}</TableCell>
+                      <TableCell>{formatDate(record.outboundDate)}</TableCell>
+                      <TableCell>{record.purpose}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className='h-24 text-center'>Belum ada riwayat barang keluar.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -191,51 +302,89 @@ export default function BarangJadiPage() {
         </Card>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+      {/* Dialog Pencatatan Barang Masuk */}
+      <Dialog open={isInboundDialogOpen} onOpenChange={setInboundDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-                {dialogMode === 'add' ? 'Catat Barang Masuk' : 'Catat Barang Keluar'}
-            </DialogTitle>
+            <DialogTitle>Catat Barang Masuk</DialogTitle>
             <DialogDescription>
-              Masukkan jumlah stok untuk: <span className="font-semibold text-foreground">{editingProduct?.name}</span>.
-              Stok saat ini: <span className="font-semibold text-foreground">{editingProduct?.stock || 0}</span>.
+              Catat produk jadi yang telah selesai diproduksi dan masuk ke gudang.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div>
-                <Label htmlFor="stockChange">Jumlah</Label>
-                <Input
-                  id="stockChange"
-                  type="number"
-                  value={stockChange}
-                  onChange={(e) => setStockChange(Number(e.target.value))}
-                  placeholder="Masukkan jumlah stok"
-                  min="1"
-                />
+          <form onSubmit={handleInboundFormSubmit} className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="inbound-productId">Nama Produk</Label>
+              <Select name="productId" required>
+                <SelectTrigger id="inbound-productId">
+                  <SelectValue placeholder="Pilih produk" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-             {dialogMode === 'subtract' && (
-               <div>
-                <Label htmlFor="note">Catatan (Opsional)</Label>
-                <Input
-                    id="note"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Contoh: Untuk sampel foto"
-                />
-                </div>
-            )}
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Batal
-              </Button>
-            </DialogClose>
-            <Button type="button" onClick={handleSaveStock}>
-              Simpan
-            </Button>
-          </DialogFooter>
+            <div className="space-y-2">
+              <Label htmlFor="inbound-quantity">Jumlah</Label>
+              <Input id="inbound-quantity" name="quantity" type="number" placeholder="Masukkan jumlah" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inbound-date">Tanggal Masuk</Label>
+              <Input id="inbound-date" name="inboundDate" type="date" defaultValue={new Date().toISOString().split('T')[0]} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inbound-notes">Catatan (Opsional)</Label>
+              <Input id="inbound-notes" name="notes" placeholder="Contoh: Dari batch produksi #25" />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Batal</Button>
+              </DialogClose>
+              <Button type="submit">Simpan</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog Pencatatan Barang Keluar */}
+      <Dialog open={isOutboundDialogOpen} onOpenChange={setOutboundDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Catat Barang Keluar</DialogTitle>
+            <DialogDescription>
+              Catat produk jadi yang keluar dari gudang untuk keperluan non-penjualan.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleOutboundFormSubmit} className="grid gap-4 py-4">
+             <div className="space-y-2">
+              <Label htmlFor="outbound-productId">Nama Produk</Label>
+              <Select name="productId" required>
+                <SelectTrigger id="outbound-productId">
+                  <SelectValue placeholder="Pilih produk" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="outbound-quantity">Jumlah</Label>
+              <Input id="outbound-quantity" name="quantity" type="number" placeholder="Masukkan jumlah" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="outbound-date">Tanggal Keluar</Label>
+              <Input id="outbound-date" name="outboundDate" type="date" defaultValue={new Date().toISOString().split('T')[0]} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="outbound-purpose">Keperluan</Label>
+              <Input id="outbound-purpose" name="purpose" placeholder="Contoh: Sampel untuk pameran" required />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Batal</Button>
+              </DialogClose>
+              <Button type="submit">Simpan</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>
