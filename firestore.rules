@@ -38,9 +38,8 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      // Check if the user document exists and has a valid admin-level role.
-      let userRole = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-      return userRole in ['admin', 'owner', 'kasir', 'pegawai gudang'];
+      // Check for a custom claim 'role' on the user's auth token.
+      return request.auth.token.role in ['admin', 'owner', 'kasir', 'pegawai gudang'];
     }
 
     /**
