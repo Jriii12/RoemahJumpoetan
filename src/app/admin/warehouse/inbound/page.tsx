@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -28,7 +28,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
 import { collection, addDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -70,6 +77,10 @@ export default function BarangMentahPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
 
+  // State for purchase form
+  const [purchaseName, setPurchaseName] = useState('');
+  const [purchaseStore, setPurchaseStore] = useState('');
+
   // Firestore hooks
   const purchasesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -83,16 +94,53 @@ export default function BarangMentahPage() {
   }, [firestore]);
   const { data: usedMaterials, isLoading: isLoadingUsages } = useCollection<UsedMaterial>(usagesQuery);
   
+  const { uniqueMaterialNames, materialToStoreMap } = useMemo(() => {
+    if (!purchasedMaterials) return { uniqueMaterialNames: [], materialToStoreMap: new Map() };
+    const names = new Set<string>();
+    const storeMap = new Map<string, string>();
+    // Iterate in reverse to get the latest purchase first
+    for (let i = purchasedMaterials.length - 1; i >= 0; i--) {
+        const material = purchasedMaterials[i];
+        names.add(material.name);
+        if (!storeMap.has(material.name)) {
+            storeMap.set(material.name, material.storeName);
+        }
+    }
+    return { uniqueMaterialNames: Array.from(names).sort(), materialToStoreMap: storeMap };
+  }, [purchasedMaterials]);
+
+  useEffect(() => {
+    if (isPurchaseDialogOpen) {
+      setPurchaseName('');
+      setPurchaseStore('');
+    }
+  }, [isPurchaseDialogOpen]);
+
+  const handlePurchaseMaterialSelect = (name: string) => {
+    if (name === 'addNew') {
+      setPurchaseName('');
+      setPurchaseStore('');
+    } else {
+      setPurchaseName(name);
+      setPurchaseStore(materialToStoreMap.get(name) || '');
+    }
+  };
+
   const handlePurchaseFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firestore) return;
     const formData = new FormData(e.currentTarget);
     const newPurchaseData = {
-      name: formData.get('name') as string,
+      name: purchaseName || formData.get('customName') as string,
       quantity: formData.get('quantity') as string,
-      storeName: formData.get('storeName') as string,
+      storeName: purchaseStore,
       purchaseDate: formData.get('purchaseDate') as string,
     };
+    
+    if (!newPurchaseData.name) {
+        toast({ variant: 'destructive', title: 'Nama barang harus diisi' });
+        return;
+    }
     
     const purchasesColRef = collection(firestore, 'purchasedRawMaterials');
     addDoc(purchasesColRef, newPurchaseData).then(() => {
@@ -118,6 +166,11 @@ export default function BarangMentahPage() {
       purpose: formData.get('purpose') as string,
       usageDate: formData.get('usageDate') as string,
     };
+
+    if (!newUsageData.name || newUsageData.name === 'addNew') {
+        toast({ variant: 'destructive', title: 'Nama barang harus dipilih' });
+        return;
+    }
 
     const usagesColRef = collection(firestore, 'usedRawMaterials');
     addDoc(usagesColRef, newUsageData).then(() => {
@@ -323,12 +376,25 @@ export default function BarangMentahPage() {
           <form onSubmit={handlePurchaseFormSubmit} className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nama Barang</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="Contoh: Kain Katun Jepang"
-                required
-              />
+              <Select onValueChange={handlePurchaseMaterialSelect} defaultValue="">
+                <SelectTrigger id="name">
+                  <SelectValue placeholder="Pilih atau ketik barang baru" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueMaterialNames.map(name => (
+                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  ))}
+                  <SelectItem value="addNew">-- Ketik Barang Baru --</SelectItem>
+                </SelectContent>
+              </Select>
+              {purchaseName === '' && (
+                <Input
+                  name="customName"
+                  placeholder="Ketik nama barang baru"
+                  className="mt-2"
+                  required
+                />
+              )}
             </div>
              <div className="space-y-2">
               <Label htmlFor="quantity">Jumlah</Label>
@@ -344,6 +410,8 @@ export default function BarangMentahPage() {
               <Input
                 id="storeName"
                 name="storeName"
+                value={purchaseStore}
+                onChange={(e) => setPurchaseStore(e.target.value)}
                 placeholder="Contoh: Toko Kain Maju Jaya"
                 required
               />
@@ -382,18 +450,22 @@ export default function BarangMentahPage() {
           </DialogHeader>
           <form onSubmit={handleUsageFormSubmit} className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nama Barang</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="Contoh: Kain Katun Jepang"
-                required
-              />
+              <Label htmlFor="usage-name">Nama Barang</Label>
+              <Select name="name" required>
+                <SelectTrigger id="usage-name">
+                  <SelectValue placeholder="Pilih barang yang digunakan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueMaterialNames.map(name => (
+                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
              <div className="space-y-2">
-              <Label htmlFor="quantity">Jumlah</Label>
+              <Label htmlFor="usage-quantity">Jumlah</Label>
               <Input
-                id="quantity"
+                id="usage-quantity"
                 name="quantity"
                 placeholder="Contoh: 10 meter"
                 required
