@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useFirestore, useCollection, WithId } from '@/firebase';
+import { useFirestore, WithId } from '@/firebase';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import {
   Table,
@@ -87,10 +87,10 @@ export default function RatingProdukPage() {
     fetchAllRatings();
   }, [firestore]);
   
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-';
-    // Handle Firestore Timestamp object
-    const date = (dateString as any).toDate ? (dateString as any).toDate() : new Date(dateString);
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return '-';
+    // Handle both string and Firestore Timestamp object
+    const date = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
     return date.toLocaleDateString('id-ID', {
       year: 'numeric',
       month: 'long',
