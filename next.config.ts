@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         hostname: 'drive.google.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'down-id.img.susercontent.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
