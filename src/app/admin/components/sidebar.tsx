@@ -45,12 +45,8 @@ const menuItems = [
   },
   {
     label: 'Pesanan',
+    href: '/admin/orders',
     icon: ShoppingCart,
-    subItems: [
-      { label: 'Order', href: '/admin/orders' },
-      { label: 'Pengiriman', href: '/admin/orders/shipping' },
-      { label: 'Return/Refund', href: '/admin/orders/returns' },
-    ],
   },
   {
     label: 'Gudang',
