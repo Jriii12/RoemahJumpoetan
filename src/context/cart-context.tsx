@@ -17,6 +17,7 @@ type CartContextType = {
   addToCart: (product: WithId<Omit<Product, 'id'>>, size?: string) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
+  clearCart: () => void;
   cartCount: number;
   cartTotal: number;
 };
@@ -65,6 +66,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       variant: 'destructive',
     });
   };
+  
+  const clearCart = () => {
+    setCartItems([]);
+  }
 
   const updateQuantity = (cartItemId: string, quantity: number) => {
     if (quantity <= 0) {
@@ -94,6 +99,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     addToCart,
     removeFromCart,
     updateQuantity,
+    clearCart,
     cartCount,
     cartTotal,
   };

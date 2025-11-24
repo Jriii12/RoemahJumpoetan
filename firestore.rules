@@ -11,7 +11,7 @@
  * - /products/{productId}: Stores product catalog data. Publicly readable.
  * - /products/{productId}/ratings/{ratingId}: Stores ratings for a product. Writable by authenticated users, readable by admins.
  * - /users/{userId}/shoppingCarts/{shoppingCartId}: Stores a user's shopping cart. Only the owning user can access.
- * - /users/{userId}/orders/{orderId}: Stores a user's order history. Only the owning user can access.
+ * - /orders/{orderId}: Stores order history for all users. Writable by authenticated users, readable by admins.
  * - /testimonials/{testimonialId}: Stores customer testimonials. Publicly readable, and now creatable by authenticated users.
  * - /purchasedRawMaterials/{materialId}: Stores raw material purchases. Writable by admins.
  * - /usedRawMaterials/{usageId}: Stores raw material usages. Writable by admins.
@@ -92,11 +92,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces user-ownership for order history. Only the authenticated user can access their own order history.
-     * @path /users/{userId}/orders/{orderId}
+     * @description Allows authenticated users to create orders. Admins can read and update all orders.
+     * @path /orders/{orderId}
      */
-    match /users/{userId}/orders/{orderId} {
-      allow read, write: if isOwner(userId);
+    match /orders/{orderId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, update: if isAdmin();
     }
 
     /**

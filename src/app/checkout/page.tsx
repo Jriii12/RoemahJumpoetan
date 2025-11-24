@@ -12,21 +12,20 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useUser, useFirestore } from '@/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function CheckoutPage() {
-  const { cartItems, cartTotal } = useCart();
+  const { cartItems, cartTotal, clearCart } = useCart();
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useUser();
+  const firestore = useFirestore();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -36,15 +35,60 @@ export default function CheckoutPage() {
     }).format(price);
   };
   
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-     toast({
-      title: 'Pesanan Berhasil!',
-      description: 'Terima kasih telah berbelanja. Kami akan segera memproses pesanan Anda.',
-    });
-    // Here you would typically clear the cart and redirect
-    // For now, we just redirect to home
-    router.push('/');
+    if (!user || !firestore || cartItems.length === 0) {
+        toast({
+            title: 'Error',
+            description: 'Anda harus login dan memiliki barang di keranjang.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    
+    const formData = new FormData(e.currentTarget);
+    const customerDetails = {
+        firstName: formData.get('firstName') as string,
+        lastName: formData.get('lastName') as string,
+        address: formData.get('address') as string,
+        city: formData.get('city') as string,
+        postalCode: formData.get('postalCode') as string,
+    }
+
+    const orderData = {
+        userId: user.uid,
+        customerName: `${customerDetails.firstName} ${customerDetails.lastName}`,
+        customerDetails,
+        products: cartItems.map(item => ({
+            id: item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            size: item.size,
+            imageUrl: item.product.imageUrl
+        })),
+        totalAmount: cartTotal,
+        orderDate: new Date().toISOString(),
+        status: 'Pending',
+    };
+
+    const ordersColRef = collection(firestore, 'orders');
+
+    addDoc(ordersColRef, orderData).then(() => {
+        toast({
+            title: 'Pesanan Berhasil!',
+            description: 'Terima kasih telah berbelanja. Kami akan segera memproses pesanan Anda.',
+        });
+        clearCart();
+        router.push('/products');
+    }).catch(err => {
+         const permissionError = new FirestorePermissionError({
+          path: ordersColRef.path,
+          operation: 'create',
+          requestResourceData: orderData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    })
   }
 
   if (cartItems.length === 0) {
@@ -78,25 +122,25 @@ export default function CheckoutPage() {
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="firstName">Nama Depan</Label>
-                        <Input id="firstName" placeholder="Nama Depan" required/>
+                        <Input id="firstName" name="firstName" placeholder="Nama Depan" required/>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="lastName">Nama Belakang</Label>
-                        <Input id="lastName" placeholder="Nama Belakang" required/>
+                        <Input id="lastName" name="lastName" placeholder="Nama Belakang" required/>
                     </div>
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="address">Alamat</Label>
-                    <Input id="address" placeholder="Jalan, nomor rumah, etc." required/>
+                    <Input id="address" name="address" placeholder="Jalan, nomor rumah, etc." required/>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="city">Kota</Label>
-                        <Input id="city" placeholder="Kota" required/>
+                        <Input id="city" name="city" placeholder="Kota" required/>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="postalCode">Kode Pos</Label>
-                        <Input id="postalCode" placeholder="Kode Pos" required/>
+                        <Input id="postalCode" name="postalCode" placeholder="Kode Pos" required/>
                     </div>
                 </div>
               </CardContent>
