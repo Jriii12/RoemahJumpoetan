@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,17 @@ import {
   DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -36,7 +47,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collection, addDoc, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -82,12 +93,16 @@ const parseQuantity = (quantityStr: string): { value: number; unit: string } => 
 export default function BarangMentahPage() {
   const [isPurchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [isUsageDialogOpen, setUsageDialogOpen] = useState(false);
+  const [editingPurchase, setEditingPurchase] = useState<WithId<PurchasedMaterial> | null>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
 
   // State for purchase form
   const [purchaseName, setPurchaseName] = useState('');
   const [purchaseStore, setPurchaseStore] = useState('');
+  const [purchaseQuantity, setPurchaseQuantity] = useState('');
+  const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
+
 
   // Firestore hooks
   const purchasesQuery = useMemoFirebase(() => {
@@ -103,7 +118,6 @@ export default function BarangMentahPage() {
   const { data: usedMaterials, isLoading: isLoadingUsages } = useCollection<UsedMaterial>(usagesQuery);
   
   const purchasedMaterials = useMemo(() => {
-    // Combine seed data with fetched data, giving precedence to fetched data if not empty
     if (fetchedPurchases && fetchedPurchases.length > 0) {
       return fetchedPurchases;
     }
@@ -114,7 +128,6 @@ export default function BarangMentahPage() {
     if (!purchasedMaterials) return { uniqueMaterialNames: [], materialToStoreMap: new Map() };
     const names = new Set<string>();
     const storeMap = new Map<string, string>();
-    // Iterate in reverse to get the latest purchase first
     for (let i = purchasedMaterials.length - 1; i >= 0; i--) {
         const material = purchasedMaterials[i];
         names.add(material.name);
@@ -124,13 +137,39 @@ export default function BarangMentahPage() {
     }
     return { uniqueMaterialNames: Array.from(names).sort(), materialToStoreMap: storeMap };
   }, [purchasedMaterials]);
+  
+  const resetPurchaseForm = () => {
+    setPurchaseName('');
+    setPurchaseStore('');
+    setPurchaseQuantity('');
+    setPurchaseDate(new Date().toISOString().split('T')[0]);
+    setEditingPurchase(null);
+  };
 
   useEffect(() => {
     if (isPurchaseDialogOpen) {
-      setPurchaseName('');
-      setPurchaseStore('');
+      if (editingPurchase) {
+        setPurchaseName(editingPurchase.name);
+        setPurchaseStore(editingPurchase.storeName);
+        setPurchaseQuantity(editingPurchase.quantity);
+        setPurchaseDate(editingPurchase.purchaseDate);
+      } else {
+        resetPurchaseForm();
+      }
+    } else {
+       resetPurchaseForm();
     }
-  }, [isPurchaseDialogOpen]);
+  }, [isPurchaseDialogOpen, editingPurchase]);
+
+  const handleAddNewPurchaseClick = () => {
+    setEditingPurchase(null);
+    setPurchaseDialogOpen(true);
+  };
+  
+  const handleEditPurchaseClick = (purchase: WithId<PurchasedMaterial>) => {
+    setEditingPurchase(purchase);
+    setPurchaseDialogOpen(true);
+  };
 
   const handlePurchaseMaterialSelect = (name: string) => {
     if (name === 'addNew') {
@@ -146,32 +185,54 @@ export default function BarangMentahPage() {
     e.preventDefault();
     if (!firestore) return;
     const formData = new FormData(e.currentTarget);
-    const newPurchaseData = {
-      name: purchaseName || formData.get('customName') as string,
-      quantity: formData.get('quantity') as string,
+    const customName = formData.get('customName') as string;
+    
+    const purchaseData = {
+      name: purchaseName || customName,
+      quantity: purchaseQuantity,
       storeName: purchaseStore,
-      purchaseDate: formData.get('purchaseDate') as string,
+      purchaseDate: purchaseDate,
     };
     
-    if (!newPurchaseData.name) {
+    if (!purchaseData.name) {
         toast({ variant: 'destructive', title: 'Nama barang harus diisi' });
         return;
     }
     
-    const purchasesColRef = collection(firestore, 'purchasedRawMaterials');
-    addDoc(purchasesColRef, newPurchaseData).then(() => {
-        toast({ title: "Pembelian berhasil dicatat." });
+    if (editingPurchase) {
+      // Update existing document
+      const docRef = doc(firestore, 'purchasedRawMaterials', editingPurchase.id);
+      updateDoc(docRef, purchaseData).then(() => {
+        toast({ title: "Pembelian berhasil diperbarui." });
         setPurchaseDialogOpen(false);
-    }).catch(err => {
-        const permissionError = new FirestorePermissionError({
-            path: purchasesColRef.path,
-            operation: 'create',
-            requestResourceData: newPurchaseData,
-        });
+      }).catch(err => {
+        const permissionError = new FirestorePermissionError({ path: docRef.path, operation: 'update', requestResourceData: purchaseData });
         errorEmitter.emit('permission-error', permissionError);
-    });
+      });
+    } else {
+      // Add new document
+      const purchasesColRef = collection(firestore, 'purchasedRawMaterials');
+      addDoc(purchasesColRef, purchaseData).then(() => {
+          toast({ title: "Pembelian berhasil dicatat." });
+          setPurchaseDialogOpen(false);
+      }).catch(err => {
+          const permissionError = new FirestorePermissionError({ path: purchasesColRef.path, operation: 'create', requestResourceData: purchaseData });
+          errorEmitter.emit('permission-error', permissionError);
+      });
+    }
   }
   
+  const handleDeletePurchase = async (purchaseId: string) => {
+    if (!firestore) return;
+    const docRef = doc(firestore, 'purchasedRawMaterials', purchaseId);
+    deleteDoc(docRef).then(() => {
+      toast({ title: "Catatan pembelian berhasil dihapus." });
+    }).catch(err => {
+      const permissionError = new FirestorePermissionError({ path: docRef.path, operation: 'delete' });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+  }
+
   const handleUsageFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firestore) return;
@@ -193,11 +254,7 @@ export default function BarangMentahPage() {
         toast({ title: "Penggunaan berhasil dicatat." });
         setUsageDialogOpen(false);
     }).catch(err => {
-        const permissionError = new FirestorePermissionError({
-            path: usagesColRef.path,
-            operation: 'create',
-            requestResourceData: newUsageData,
-        });
+        const permissionError = new FirestorePermissionError({ path: usagesColRef.path, operation: 'create', requestResourceData: newUsageData });
         errorEmitter.emit('permission-error', permissionError);
     });
   }
@@ -244,7 +301,6 @@ export default function BarangMentahPage() {
       <div className="space-y-8">
         <h1 className="text-2xl font-bold">Gudang - Barang Mentah</h1>
 
-        {/* Tabel Stok Akhir */}
         <Card>
             <CardHeader>
                 <CardTitle>Stok Akhir Barang Mentah</CardTitle>
@@ -285,12 +341,11 @@ export default function BarangMentahPage() {
             </CardContent>
         </Card>
 
-        {/* Tabel Barang Mentah Sudah Dibeli */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Riwayat Pembelian Barang Mentah</CardTitle>
-               <Button onClick={() => setPurchaseDialogOpen(true)}>
+               <Button onClick={handleAddNewPurchaseClick}>
                 <Plus className="mr-2 h-4 w-4" />
                 Catat Pembelian
               </Button>
@@ -304,13 +359,14 @@ export default function BarangMentahPage() {
                   <TableHead>Jumlah</TableHead>
                   <TableHead>Nama Toko</TableHead>
                   <TableHead>Tanggal Beli</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoadingPurchases ? (
                     Array.from({length: 4}).map((_,i) => (
                         <TableRow key={i}>
-                            <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                            <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
                         </TableRow>
                     ))
                 ) : purchasedMaterials && purchasedMaterials.length > 0 ? (
@@ -320,11 +376,35 @@ export default function BarangMentahPage() {
                         <TableCell>{material.quantity}</TableCell>
                         <TableCell>{material.storeName}</TableCell>
                         <TableCell>{formatDate(material.purchaseDate)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditPurchaseClick(material)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Hapus Catatan?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Apakah Anda yakin ingin menghapus catatan pembelian ini? Tindakan ini tidak dapat diurungkan.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeletePurchase(material.id)} className="bg-destructive hover:bg-destructive/80">Hapus</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
                     </TableRow>
                     ))
                 ) : (
                      <TableRow>
-                        <TableCell colSpan={4} className='h-24 text-center'>Belum ada riwayat pembelian.</TableCell>
+                        <TableCell colSpan={5} className='h-24 text-center'>Belum ada riwayat pembelian.</TableCell>
                     </TableRow>
                 )}
               </TableBody>
@@ -332,7 +412,6 @@ export default function BarangMentahPage() {
           </CardContent>
         </Card>
 
-        {/* Tabel Barang Mentah Sudah Digunakan */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -380,11 +459,11 @@ export default function BarangMentahPage() {
         </Card>
       </div>
 
-      {/* Dialog Pencatatan Pembelian */}
+      {/* Dialog Pencatatan/Edit Pembelian */}
       <Dialog open={isPurchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle className="font-headline text-xl">Catat Pembelian Barang Mentah</DialogTitle>
+            <DialogTitle className="font-headline text-xl">{editingPurchase ? 'Ubah' : 'Catat'} Pembelian Barang Mentah</DialogTitle>
             <DialogDescription>
               Isi detail pembelian barang mentah di bawah ini.
             </DialogDescription>
@@ -392,7 +471,7 @@ export default function BarangMentahPage() {
           <form onSubmit={handlePurchaseFormSubmit} className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nama Barang</Label>
-              <Select onValueChange={handlePurchaseMaterialSelect} defaultValue="">
+              <Select onValueChange={handlePurchaseMaterialSelect} value={purchaseName} disabled={!!editingPurchase}>
                 <SelectTrigger id="name">
                   <SelectValue placeholder="Pilih atau ketik barang baru" />
                 </SelectTrigger>
@@ -403,7 +482,7 @@ export default function BarangMentahPage() {
                   <SelectItem value="addNew">-- Ketik Barang Baru --</SelectItem>
                 </SelectContent>
               </Select>
-              {purchaseName === '' && (
+              {purchaseName === '' && !editingPurchase && (
                 <Input
                   name="customName"
                   placeholder="Ketik nama barang baru"
@@ -417,6 +496,8 @@ export default function BarangMentahPage() {
               <Input
                 id="quantity"
                 name="quantity"
+                value={purchaseQuantity}
+                onChange={(e) => setPurchaseQuantity(e.target.value)}
                 placeholder="Contoh: 50 meter"
                 required
               />
@@ -438,7 +519,8 @@ export default function BarangMentahPage() {
                 id="purchaseDate"
                 name="purchaseDate"
                 type="date"
-                defaultValue={new Date().toISOString().split('T')[0]}
+                value={purchaseDate}
+                onChange={(e) => setPurchaseDate(e.target.value)}
                 required
               />
             </div>
