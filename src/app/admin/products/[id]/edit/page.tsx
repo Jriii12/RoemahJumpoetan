@@ -64,11 +64,12 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const productId = params.id;
 
   const productDocRef = useMemoFirebase(() => {
-    if(!firestore || !params.id) return null;
-    return doc(firestore, 'products', params.id);
-  }, [firestore, params.id]);
+    if(!firestore || !productId) return null;
+    return doc(firestore, 'products', productId);
+  }, [firestore, productId]);
 
   const { data: productData, isLoading } = useDoc<Omit<Product, 'id'>>(productDocRef);
 
