@@ -81,8 +81,8 @@ export default function RatingProdukPage() {
 
         // Sort all ratings globally by date
         collectedRatings.sort((a, b) => {
-            const dateA = (a.createdAt as any).toDate ? (a.createdAt as any).toDate() : new Date(a.createdAt);
-            const dateB = (b.createdAt as any).toDate ? (b.createdAt as any).toDate() : new Date(b.createdAt);
+            const dateA = new Date(a.createdAt);
+            const dateB = new Date(b.createdAt);
             return dateB.getTime() - dateA.getTime();
         });
         
