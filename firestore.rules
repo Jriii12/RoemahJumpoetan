@@ -82,6 +82,14 @@ service cloud.firestore {
         allow update, delete: if false; // Ratings are immutable for now
       }
     }
+    
+    /**
+     * @description Collection group rule to allow admins to list all ratings across all products.
+     * @path /products/{productId}/ratings/{ratingId}
+     */
+    match /{path=**}/ratings/{ratingId} {
+      allow list: if isAdmin();
+    }
 
     /**
      * @description Enforces user-ownership for shopping carts. Only the authenticated user can manage their own shopping cart.
@@ -106,7 +114,8 @@ service cloud.firestore {
      */
     match /testimonials/{testimonialId} {
       allow create: if request.auth != null;
-      allow get, list, update, delete: if false;
+      allow get, list: if true;
+      allow update, delete: if false;
     }
     
     /**
