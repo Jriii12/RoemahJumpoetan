@@ -20,6 +20,7 @@ export type Product = {
   description: string;
   imageUrl: string;
   imageHint: string;
+  stock?: number;
 };
 
 export type Testimonial = {

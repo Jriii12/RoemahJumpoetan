@@ -89,6 +89,10 @@
         "imageHint": {
           "type": "string",
           "description": "A hint for AI image generation or search."
+        },
+        "stock": {
+          "type": "number",
+          "description": "The available stock quantity of the product."
         }
       },
       "required": [
