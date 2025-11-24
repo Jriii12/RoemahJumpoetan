@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collection, addDoc, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Product } from '@/lib/data';
@@ -46,6 +46,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 type InboundRecord = {
   productId: string;
   productName: string;
+  category: string;
   quantity: number;
   inboundDate: string;
   notes: string;
@@ -54,6 +55,7 @@ type InboundRecord = {
 type OutboundRecord = {
   productId: string;
   productName: string;
+  category: string;
   quantity: number;
   outboundDate: string;
   purpose: string;
@@ -97,9 +99,10 @@ export default function BarangJadiPage() {
   
   const handleInboundFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!firestore) return;
+    if (!firestore || !products) return;
     const formData = new FormData(e.currentTarget);
-    const selectedProduct = products?.find(p => p.id === formData.get('productId'));
+    const productId = formData.get('productId') as string;
+    const selectedProduct = products.find(p => p.id === productId);
 
     if (!selectedProduct) {
         toast({ variant: 'destructive', title: 'Produk harus dipilih' });
@@ -109,6 +112,7 @@ export default function BarangJadiPage() {
     const newInboundData: Omit<InboundRecord, 'id'> = {
       productId: selectedProduct.id,
       productName: selectedProduct.name,
+      category: selectedProduct.category,
       quantity: parseQuantity(formData.get('quantity') as string),
       inboundDate: formData.get('inboundDate') as string,
       notes: formData.get('notes') as string,
@@ -126,9 +130,10 @@ export default function BarangJadiPage() {
 
   const handleOutboundFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!firestore) return;
+    if (!firestore || !products) return;
     const formData = new FormData(e.currentTarget);
-    const selectedProduct = products?.find(p => p.id === formData.get('productId'));
+    const productId = formData.get('productId') as string;
+    const selectedProduct = products.find(p => p.id === productId);
 
     if (!selectedProduct) {
         toast({ variant: 'destructive', title: 'Produk harus dipilih' });
@@ -138,6 +143,7 @@ export default function BarangJadiPage() {
     const newOutboundData: Omit<OutboundRecord, 'id'> = {
       productId: selectedProduct.id,
       productName: selectedProduct.name,
+      category: selectedProduct.category,
       quantity: parseQuantity(formData.get('quantity') as string),
       outboundDate: formData.get('outboundDate') as string,
       purpose: formData.get('purpose') as string,
@@ -155,14 +161,12 @@ export default function BarangJadiPage() {
   
   const finalStock = useMemo(() => {
     if (!products) return [];
-
-    const stockMap = new Map<string, { name: string; final: number }>();
-    
-    products.forEach(p => {
-        stockMap.set(p.id, { name: p.name, final: p.stock || 0 });
-    });
-
-    return Array.from(stockMap.values());
+    return products.map(p => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        final: p.stock || 0
+    }));
   }, [products]);
 
 
@@ -182,6 +186,7 @@ export default function BarangJadiPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama Produk</TableHead>
+                  <TableHead>Kategori</TableHead>
                   <TableHead className="text-right">Stok Akhir</TableHead>
                 </TableRow>
               </TableHeader>
@@ -189,19 +194,20 @@ export default function BarangJadiPage() {
                 {isLoadingProducts ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={2}><Skeleton className="h-8 w-full" /></TableCell>
+                      <TableCell colSpan={3}><Skeleton className="h-8 w-full" /></TableCell>
                     </TableRow>
                   ))
                 ) : finalStock.length > 0 ? (
                   finalStock.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className='font-medium'>{item.name}</TableCell>
+                      <TableCell>{item.category}</TableCell>
                       <TableCell className='font-bold text-right'>{item.final}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={2} className='h-24 text-center'>Belum ada data stok.</TableCell>
+                    <TableCell colSpan={3} className='h-24 text-center'>Belum ada data stok.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -224,6 +230,7 @@ export default function BarangJadiPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama Produk</TableHead>
+                  <TableHead>Kategori</TableHead>
                   <TableHead>Jumlah</TableHead>
                   <TableHead>Tanggal Masuk</TableHead>
                   <TableHead>Catatan</TableHead>
@@ -233,13 +240,14 @@ export default function BarangJadiPage() {
                 {isLoadingInbound ? (
                   Array.from({ length: 2 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                      <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
                     </TableRow>
                   ))
                 ) : inboundRecords && inboundRecords.length > 0 ? (
                   inboundRecords.map((record) => (
                     <TableRow key={record.id}>
                       <TableCell className="font-medium">{record.productName}</TableCell>
+                      <TableCell>{record.category}</TableCell>
                       <TableCell>{record.quantity}</TableCell>
                       <TableCell>{formatDate(record.inboundDate)}</TableCell>
                       <TableCell>{record.notes || '-'}</TableCell>
@@ -247,7 +255,7 @@ export default function BarangJadiPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className='h-24 text-center'>Belum ada riwayat barang masuk.</TableCell>
+                    <TableCell colSpan={5} className='h-24 text-center'>Belum ada riwayat barang masuk.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -270,6 +278,7 @@ export default function BarangJadiPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama Produk</TableHead>
+                  <TableHead>Kategori</TableHead>
                   <TableHead>Jumlah</TableHead>
                   <TableHead>Tanggal Keluar</TableHead>
                   <TableHead>Keperluan</TableHead>
@@ -279,13 +288,14 @@ export default function BarangJadiPage() {
                 {isLoadingOutbound ? (
                   Array.from({ length: 2 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                      <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
                     </TableRow>
                   ))
                 ) : outboundRecords && outboundRecords.length > 0 ? (
                   outboundRecords.map((record) => (
                     <TableRow key={record.id}>
                       <TableCell className="font-medium">{record.productName}</TableCell>
+                      <TableCell>{record.category}</TableCell>
                       <TableCell>{record.quantity}</TableCell>
                       <TableCell>{formatDate(record.outboundDate)}</TableCell>
                       <TableCell>{record.purpose}</TableCell>
@@ -293,7 +303,7 @@ export default function BarangJadiPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className='h-24 text-center'>Belum ada riwayat barang keluar.</TableCell>
+                    <TableCell colSpan={5} className='h-24 text-center'>Belum ada riwayat barang keluar.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
