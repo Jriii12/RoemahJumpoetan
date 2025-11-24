@@ -1,21 +1,22 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, WithId } from '@/firebase';
+import { collection, addDoc, serverTimestamp, query, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import type { Product } from '@/lib/data';
 
 
 const testimonialSchema = z.object({
@@ -26,10 +27,17 @@ const testimonialSchema = z.object({
 type TestimonialFormData = z.infer<typeof testimonialSchema>;
 
 export function TestimonialForm() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [hoveredRating, setHoveredRating] = useState(0);
+
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'), limit(1));
+  }, [firestore]);
+
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
 
   const form = useForm<TestimonialFormData>({
     resolver: zodResolver(testimonialSchema),
@@ -49,15 +57,27 @@ export function TestimonialForm() {
       return;
     }
 
-    const testimonialsColRef = collection(firestore, 'testimonials');
-    const newTestimonialData = {
+    if (!products || products.length === 0) {
+       toast({
+        variant: 'destructive',
+        title: 'Gagal Mengirim',
+        description: 'Tidak ada produk untuk diberi rating.',
+      });
+      return;
+    }
+
+    const productToRate = products[0];
+    const productRatingsColRef = collection(firestore, `products/${productToRate.id}/ratings`);
+
+    const newRatingData = {
         userId: user.uid,
-        text: data.comment,
+        userName: user.displayName || user.email || 'Anonymous',
+        comment: data.comment,
         rating: data.rating,
-        dateCreated: serverTimestamp(),
+        createdAt: new Date().toISOString(),
       };
 
-    addDoc(testimonialsColRef, newTestimonialData)
+    addDoc(productRatingsColRef, newRatingData)
       .then(() => {
         toast({
           title: 'Terima Kasih!',
@@ -67,9 +87,9 @@ export function TestimonialForm() {
       })
       .catch((error) => {
         const permissionError = new FirestorePermissionError({
-          path: testimonialsColRef.path,
+          path: productRatingsColRef.path,
           operation: 'create',
-          requestResourceData: newTestimonialData,
+          requestResourceData: newRatingData,
         });
         errorEmitter.emit('permission-error', permissionError);
       });
@@ -86,7 +106,9 @@ export function TestimonialForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {user ? (
+            {isUserLoading || isLoadingProducts ? (
+              <div className="text-center text-muted-foreground">Memuat...</div>
+            ) : user ? (
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div>
                   <Controller
