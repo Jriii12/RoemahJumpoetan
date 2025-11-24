@@ -3,6 +3,7 @@
 
 import { FeaturedProducts } from '@/components/featured-products';
 import { Testimonials } from '@/components/testimonials';
+import { TestimonialForm } from '@/components/testimonial-form';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 
@@ -31,6 +32,8 @@ export default function Home() {
       <FeaturedProducts />
       <Separator className="my-12 md:my-24" />
       <Testimonials />
+      <Separator className="my-12 md:my-24" />
+      <TestimonialForm />
     </div>
   );
 }
