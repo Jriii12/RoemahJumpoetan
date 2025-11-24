@@ -69,10 +69,10 @@ type UsedMaterial = {
 
 // Initial data as requested by the user
 const initialPurchases: WithId<PurchasedMaterial>[] = [
-  { id: 'seed1', name: 'kain', quantity: '100 meter', storeName: 'toko cemerlang', purchaseDate: new Date().toISOString().split('T')[0] },
-  { id: 'seed2', name: 'pewarnaan zat sintesis', quantity: '5 kg', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
-  { id: 'seed3', name: 'gambir pewarnaan alam', quantity: '10 kg', storeName: 'babat toman', purchaseDate: new Date().toISOString().split('T')[0] },
-  { id: 'seed4', name: 'pelembit kain', quantity: '2 liter', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
+    { id: 'seed1', name: 'kain', quantity: '100 meter', storeName: 'toko cemerlang', purchaseDate: new Date().toISOString().split('T')[0] },
+    { id: 'seed2', name: 'pewarnaan zat sintesis', quantity: '5 kg', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
+    { id: 'seed3', name: 'gambir pewarnaan alam', quantity: '10 kg', storeName: 'babat toman', purchaseDate: new Date().toISOString().split('T')[0] },
+    { id: 'seed4', name: 'pelembit kain', quantity: '2 liter', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
 ];
 
 const formatDate = (dateString: string) => {
@@ -83,6 +83,7 @@ const formatDate = (dateString: string) => {
 
 // Helper to parse quantity strings like "100 meter" into { value: 100, unit: "meter" }
 const parseQuantity = (quantityStr: string): { value: number; unit: string } => {
+    if (!quantityStr) return { value: 0, unit: '' };
     const match = quantityStr.match(/^(\d+)\s*(\D+)$/);
     if (match) {
         return { value: parseInt(match[1], 10), unit: match[2].trim() };
@@ -118,22 +119,23 @@ export default function BarangMentahPage() {
   const { data: usedMaterials, isLoading: isLoadingUsages } = useCollection<UsedMaterial>(usagesQuery);
   
   const purchasedMaterials = useMemo(() => {
+    if (fetchedPurchases === null && isLoadingPurchases) {
+        return []; // Still loading
+    }
     if (fetchedPurchases && fetchedPurchases.length > 0) {
       return fetchedPurchases;
     }
     return initialPurchases;
-  }, [fetchedPurchases]);
+  }, [fetchedPurchases, isLoadingPurchases]);
 
   const { uniqueMaterialNames, materialToStoreMap } = useMemo(() => {
     if (!purchasedMaterials) return { uniqueMaterialNames: [], materialToStoreMap: new Map() };
     const names = new Set<string>();
     const storeMap = new Map<string, string>();
-    for (let i = purchasedMaterials.length - 1; i >= 0; i--) {
-        const material = purchasedMaterials[i];
+    // Iterate forwards to get the latest store name for a material
+    for (const material of purchasedMaterials) {
         names.add(material.name);
-        if (!storeMap.has(material.name)) {
-            storeMap.set(material.name, material.storeName);
-        }
+        storeMap.set(material.name, material.storeName);
     }
     return { uniqueMaterialNames: Array.from(names).sort(), materialToStoreMap: storeMap };
   }, [purchasedMaterials]);
@@ -172,23 +174,24 @@ export default function BarangMentahPage() {
   };
 
   const handlePurchaseMaterialSelect = (name: string) => {
-    if (name === 'addNew') {
-      setPurchaseName('');
-      setPurchaseStore('');
-    } else {
-      setPurchaseName(name);
+    setPurchaseName(name);
+    if (name !== 'addNew') {
       setPurchaseStore(materialToStoreMap.get(name) || '');
+    } else {
+      setPurchaseStore('');
     }
   };
 
   const handlePurchaseFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firestore) return;
-    const formData = new FormData(e.currentTarget);
-    const customName = formData.get('customName') as string;
     
+    const finalPurchaseName = purchaseName === 'addNew' 
+        ? (e.currentTarget.elements.namedItem('customName') as HTMLInputElement)?.value 
+        : purchaseName;
+
     const purchaseData = {
-      name: purchaseName || customName,
+      name: finalPurchaseName,
       quantity: purchaseQuantity,
       storeName: purchaseStore,
       purchaseDate: purchaseDate,
@@ -262,8 +265,9 @@ export default function BarangMentahPage() {
   // Calculate final stock
   const finalStock = useMemo(() => {
     const stockMap = new Map<string, { purchased: number; used: number; unit: string }>();
+    const materials = (fetchedPurchases?.length ?? 0) > 0 ? fetchedPurchases : initialPurchases;
 
-    purchasedMaterials?.forEach(material => {
+    materials?.forEach(material => {
       const { value, unit } = parseQuantity(material.quantity);
       if (!unit) return;
       const key = `${material.name.toLowerCase()}_${unit.toLowerCase()}`;
@@ -292,7 +296,7 @@ export default function BarangMentahPage() {
         }
     });
 
-  }, [purchasedMaterials, usedMaterials]);
+  }, [fetchedPurchases, usedMaterials, initialPurchases]);
 
   const isLoading = isLoadingPurchases || isLoadingUsages;
 
@@ -471,18 +475,18 @@ export default function BarangMentahPage() {
           <form onSubmit={handlePurchaseFormSubmit} className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nama Barang</Label>
-              <Select onValueChange={handlePurchaseMaterialSelect} value={purchaseName} disabled={!!editingPurchase}>
-                <SelectTrigger id="name">
+              <Select onValueChange={handlePurchaseMaterialSelect} value={purchaseName} name="name" required>
+                <SelectTrigger id="name" disabled={!!editingPurchase}>
                   <SelectValue placeholder="Pilih atau ketik barang baru" />
                 </SelectTrigger>
                 <SelectContent>
                   {uniqueMaterialNames.map(name => (
                     <SelectItem key={name} value={name}>{name}</SelectItem>
                   ))}
-                  <SelectItem value="addNew">-- Ketik Barang Baru --</SelectItem>
+                  <SelectItem value="addNew">-- Tambah Barang Baru --</SelectItem>
                 </SelectContent>
               </Select>
-              {purchaseName === '' && !editingPurchase && (
+              {purchaseName === 'addNew' && !editingPurchase && (
                 <Input
                   name="customName"
                   placeholder="Ketik nama barang baru"
@@ -605,3 +609,5 @@ export default function BarangMentahPage() {
     </>
   );
 }
+
+    
