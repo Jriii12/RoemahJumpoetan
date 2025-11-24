@@ -139,9 +139,9 @@ export default function ContactPage() {
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">Butik & Workshop</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Jln. Aiptu A. Wahab, Lr. Kebun Pisang No.37,<br/>
-                      Kec. Jakbaring, Kel. Tuan Kentang,<br/>
-                      Palembang, 30252
+                      Jl. Aiptu A. Wahab, Lr. Kebun Pisang No.37, Tuan Kentang,<br/>
+                      Kecamatan Jakabaring, Kota Palembang,<br/>
+                      Sumatera Selatan 30252
                     </p>
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export default function ContactPage() {
             <div className="rounded-xl overflow-hidden border border-border/40 shadow-md h-[300px] relative">
                 {/* Menggunakan Embed Google Maps Palembang (Generic point ke Tuan Kentang) */}
                  <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.366389419885!2d104.7625543741089!3d-3.022699996953298!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9c4b6b6b6b6b%3A0x6b6b6b6b6b6b6b6b!2sTuan%20Kentang%2C%20Kec.%20Jakabaring%2C%20Kota%20Palembang%2C%20Sumatera%20Selatan!5e0!3m2!1sid!2sid!4v1700000000000!5m2!1sid!2sid"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.366389518382!2d104.7788470741089!3d-3.022700396953297!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9c7b1ab81475%3A0x8f0c921734c3875!2sRoemah%20Jumpoetan!5e0!3m2!1sid!2sid!4v1717562095817!5m2!1sid!2sid"
                     width="100%" 
                     height="100%" 
                     style={{border:0}} 
