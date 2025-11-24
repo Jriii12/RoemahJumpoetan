@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser, useFirestore, useCollection, useMemoFirebase, WithId } from '@/firebase';
-import { collection, addDoc, serverTimestamp, query, limit } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, limit, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,7 +37,7 @@ export function TestimonialForm() {
     return query(collection(firestore, 'products'), limit(1));
   }, [firestore]);
 
-  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Omit<Product, 'id'>>(productsQuery);
 
   const form = useForm<TestimonialFormData>({
     resolver: zodResolver(testimonialSchema),
@@ -71,14 +71,16 @@ export function TestimonialForm() {
 
     const newRatingData = {
         userId: user.uid,
-        userName: user.displayName || user.email || 'Anonymous',
+        userName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
         comment: data.comment,
         rating: data.rating,
         createdAt: new Date().toISOString(),
       };
 
     addDoc(productRatingsColRef, newRatingData)
-      .then(() => {
+      .then((docRef) => {
+        // We need to pass the full path of the new document to the error handler
+        const newDocPath = docRef.path;
         toast({
           title: 'Terima Kasih!',
           description: 'Ulasan Anda telah berhasil dikirim.',
@@ -86,8 +88,11 @@ export function TestimonialForm() {
         form.reset();
       })
       .catch((error) => {
+        // If addDoc fails, we don't have a docRef, so we construct the path manually.
+        // This is a simplification; in a real app, you might generate the ID client-side.
+        const optimisticPath = `${productRatingsColRef.path}/[new_rating]`;
         const permissionError = new FirestorePermissionError({
-          path: productRatingsColRef.path,
+          path: optimisticPath,
           operation: 'create',
           requestResourceData: newRatingData,
         });

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useFirestore, useMemoFirebase, useCollection, WithId } from '@/firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, collectionGroup } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/lib/data';
+import Image from 'next/image';
 
 type ProductRating = {
   userId: string;
@@ -29,50 +30,56 @@ type ProductRating = {
   rating: number;
   comment: string;
   createdAt: string;
-};
-
-type ProductWithRatings = WithId<Product> & {
-  ratings: WithId<ProductRating>[];
+  productId?: string; // Will be added when flattening
+  productName?: string; // Will be added when flattening
+  productImageUrl?: string; // Will be added when flattening
 };
 
 export default function RatingProdukPage() {
   const firestore = useFirestore();
-  const [productsWithRatings, setProductsWithRatings] = React.useState<ProductWithRatings[]>([]);
+  const [allRatings, setAllRatings] = React.useState<WithId<ProductRating>[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  const productsQuery = useMemoFirebase(() => {
+  // Query across all 'ratings' subcollections in the entire database
+  const ratingsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'products'), orderBy('name'));
+    return query(collectionGroup(firestore, 'ratings'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
-  const { data: products } = useCollection<Product>(productsQuery);
+  const { data: fetchedRatings, isLoading: isLoadingRatings } = useCollection<Omit<ProductRating, 'id'>>(ratingsQuery);
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]));
 
   React.useEffect(() => {
-    if (!products || !firestore) return;
-
-    const fetchRatings = async () => {
+    if (isLoadingRatings || isLoadingProducts) {
       setIsLoading(true);
-      const allProductsWithRatings: ProductWithRatings[] = [];
+      return;
+    }
+    if (!fetchedRatings || !products) {
+       setIsLoading(false);
+       return;
+    }
 
-      for (const product of products) {
-        const ratingsQuery = query(
-          collection(firestore, `products/${product.id}/ratings`),
-          orderBy('createdAt', 'desc'),
-          limit(5)
-        );
-        const ratingsSnapshot = await getDocs(ratingsQuery);
-        const ratings = ratingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WithId<ProductRating>));
-        
-        if (ratings.length > 0) {
-            allProductsWithRatings.push({ ...product, ratings });
-        }
-      }
-      setProductsWithRatings(allProductsWithRatings);
-      setIsLoading(false);
-    };
+    const productsMap = new Map(products.map(p => [p.id, p]));
 
-    fetchRatings();
-  }, [products, firestore]);
+    const ratingsWithProductInfo = fetchedRatings.map(rating => {
+      // The path of a subcollection document is 'products/{productId}/ratings/{ratingId}'
+      const pathSegments = rating.id.split('/');
+      const productId = pathSegments.length > 2 ? pathSegments[pathSegments.length - 3] : undefined;
+      const product = productId ? productsMap.get(productId) : undefined;
+      
+      return {
+        ...rating,
+        productId,
+        productName: product?.name || 'Unknown Product',
+        productImageUrl: product?.imageUrl
+      };
+    }).filter(r => r.productId); // Filter out any ratings that couldn't be mapped to a product
+
+    setAllRatings(ratingsWithProductInfo as WithId<ProductRating>[]);
+    setIsLoading(false);
+
+  }, [fetchedRatings, products, isLoadingRatings, isLoadingProducts]);
+
   
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
@@ -110,45 +117,51 @@ export default function RatingProdukPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-          ) : productsWithRatings.length > 0 ? (
-            <div className="space-y-8">
-              {productsWithRatings.map((product) => (
-                <div key={product.id}>
-                    <h3 className='font-bold text-lg mb-2'>{product.name}</h3>
-                    <Table>
-                        <TableHeader>
-                        <TableRow>
-                            <TableHead className='w-[150px]'>Tanggal</TableHead>
-                            <TableHead className='w-[150px]'>Pelanggan</TableHead>
-                            <TableHead className='w-[120px]'>Rating</TableHead>
-                            <TableHead>Ulasan</TableHead>
-                        </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                        {product.ratings.map((rating) => (
-                            <TableRow key={rating.id}>
-                            <TableCell>{formatDate(rating.createdAt)}</TableCell>
-                            <TableCell>{rating.userName}</TableCell>
-                            <TableCell>{renderStars(rating.rating)}</TableCell>
-                            <TableCell className='text-muted-foreground'>{rating.comment || '-'}</TableCell>
-                            </TableRow>
-                        ))}
-                        </TableBody>
-                    </Table>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="h-48 flex items-center justify-center text-center text-muted-foreground">
-              Belum ada rating yang diberikan.
-            </div>
-          )}
+          <Table>
+              <TableHeader>
+              <TableRow>
+                  <TableHead className='w-[250px]'>Produk</TableHead>
+                  <TableHead className='w-[150px]'>Pelanggan</TableHead>
+                  <TableHead className='w-[120px]'>Rating</TableHead>
+                  <TableHead>Ulasan</TableHead>
+                  <TableHead className='w-[150px]'>Tanggal</TableHead>
+              </TableRow>
+              </TableHeader>
+              <TableBody>
+              {isLoading ? (
+                  Array.from({length: 5}).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell colSpan={5}><Skeleton className="h-12 w-full" /></TableCell>
+                    </TableRow>
+                ))
+              ) : allRatings.length > 0 ? (
+                  allRatings.map((rating) => (
+                  <TableRow key={rating.id}>
+                      <TableCell>
+                          <div className='flex items-center gap-3'>
+                            {rating.productImageUrl && (
+                                <div className='relative h-10 w-10 rounded-md overflow-hidden'>
+                                    <Image src={rating.productImageUrl} alt={rating.productName || 'product'} fill className='object-cover' />
+                                </div>
+                            )}
+                            <span className='font-medium'>{rating.productName}</span>
+                          </div>
+                      </TableCell>
+                      <TableCell>{rating.userName}</TableCell>
+                      <TableCell>{renderStars(rating.rating)}</TableCell>
+                      <TableCell className='text-muted-foreground'>{rating.comment || '-'}</TableCell>
+                      <TableCell>{formatDate(rating.createdAt)}</TableCell>
+                  </TableRow>
+                  ))
+              ) : (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-48 flex items-center justify-center text-center text-muted-foreground">
+                        Belum ada rating yang diberikan.
+                    </TableCell>
+                </TableRow>
+              )}
+              </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
