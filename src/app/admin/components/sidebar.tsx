@@ -55,8 +55,8 @@ const menuItems = [
     label: 'Gudang',
     icon: Archive,
     subItems: [
-      { label: 'Barang Masuk', href: '/admin/warehouse/inbound' },
-      { label: 'Barang Keluar', href: '/admin/warehouse/outbound' },
+      { label: 'Barang Mentah', href: '/admin/warehouse/inbound' },
+      { label: 'Barang Jadi', href: '/admin/warehouse/outbound' },
     ],
   },
   {
