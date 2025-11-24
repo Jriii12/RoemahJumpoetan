@@ -35,8 +35,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collection, addDoc, query, orderBy, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Product } from '@/lib/data';
@@ -108,24 +108,39 @@ export default function BarangJadiPage() {
         toast({ variant: 'destructive', title: 'Produk harus dipilih' });
         return;
     }
+    
+    const quantity = parseQuantity(formData.get('quantity') as string);
 
     const newInboundData: Omit<InboundRecord, 'id'> = {
       productId: selectedProduct.id,
       productName: selectedProduct.name,
       category: selectedProduct.category,
-      quantity: parseQuantity(formData.get('quantity') as string),
+      quantity: quantity,
       inboundDate: formData.get('inboundDate') as string,
       notes: formData.get('notes') as string,
     };
     
     const inboundColRef = collection(firestore, 'inboundFinishedGoods');
-    addDoc(inboundColRef, newInboundData).then(() => {
-      toast({ title: 'Barang masuk berhasil dicatat.' });
+    const productDocRef = doc(firestore, 'products', selectedProduct.id);
+
+    try {
+      // Add record to inbound history
+      await addDoc(inboundColRef, newInboundData);
+      
+      // Atomically update the product stock
+      await updateDoc(productDocRef, {
+        stock: increment(quantity)
+      });
+      
+      toast({ title: 'Barang masuk berhasil dicatat dan stok diperbarui.' });
       setInboundDialogOpen(false);
-    }).catch(err => {
+
+    } catch(err) {
+      // This is a simplified error handling. A real app might need to distinguish
+      // between failing to add the record vs. failing to update the stock.
       const permissionError = new FirestorePermissionError({ path: inboundColRef.path, operation: 'create', requestResourceData: newInboundData });
       errorEmitter.emit('permission-error', permissionError);
-    });
+    }
   };
 
   const handleOutboundFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -139,24 +154,41 @@ export default function BarangJadiPage() {
         toast({ variant: 'destructive', title: 'Produk harus dipilih' });
         return;
     }
+    
+    const quantity = parseQuantity(formData.get('quantity') as string);
+
+    if (selectedProduct.stock !== undefined && selectedProduct.stock < quantity) {
+        toast({ variant: 'destructive', title: 'Stok tidak mencukupi', description: `Stok saat ini hanya ${selectedProduct.stock}.` });
+        return;
+    }
 
     const newOutboundData: Omit<OutboundRecord, 'id'> = {
       productId: selectedProduct.id,
       productName: selectedProduct.name,
       category: selectedProduct.category,
-      quantity: parseQuantity(formData.get('quantity') as string),
+      quantity: quantity,
       outboundDate: formData.get('outboundDate') as string,
       purpose: formData.get('purpose') as string,
     };
 
     const outboundColRef = collection(firestore, 'outboundFinishedGoods');
-    addDoc(outboundColRef, newOutboundData).then(() => {
-      toast({ title: 'Barang keluar berhasil dicatat.' });
+    const productDocRef = doc(firestore, 'products', selectedProduct.id);
+
+    try {
+      // Add record to outbound history
+      await addDoc(outboundColRef, newOutboundData);
+
+      // Atomically update the product stock (decrement)
+      await updateDoc(productDocRef, {
+        stock: increment(-quantity)
+      });
+
+      toast({ title: 'Barang keluar berhasil dicatat dan stok diperbarui.' });
       setOutboundDialogOpen(false);
-    }).catch(err => {
+    } catch(err) {
       const permissionError = new FirestorePermissionError({ path: outboundColRef.path, operation: 'create', requestResourceData: newOutboundData });
       errorEmitter.emit('permission-error', permissionError);
-    });
+    }
   };
   
   const finalStock = useMemo(() => {
@@ -168,7 +200,6 @@ export default function BarangJadiPage() {
         final: p.stock || 0
     }));
   }, [products]);
-
 
   const isLoading = isLoadingProducts || isLoadingInbound || isLoadingOutbound;
 
@@ -335,7 +366,7 @@ export default function BarangJadiPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="inbound-quantity">Jumlah</Label>
-              <Input id="inbound-quantity" name="quantity" type="number" placeholder="Masukkan jumlah" required />
+              <Input id="inbound-quantity" name="quantity" type="number" placeholder="Masukkan jumlah" required min="1" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="inbound-date">Tanggal Masuk</Label>
@@ -378,7 +409,7 @@ export default function BarangJadiPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="outbound-quantity">Jumlah</Label>
-              <Input id="outbound-quantity" name="quantity" type="number" placeholder="Masukkan jumlah" required />
+              <Input id="outbound-quantity" name="quantity" type="number" placeholder="Masukkan jumlah" required min="1" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="outbound-date">Tanggal Keluar</Label>
