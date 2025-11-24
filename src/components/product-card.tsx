@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 import { useCart } from '@/context/cart-context';
 import type { Product } from '@/lib/data';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Eye } from 'lucide-react';
 import type { WithId } from '@/firebase';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -13,9 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 
 type ProductCardProps = {
   product: WithId<Omit<Product, 'id'>>;
+  onDetailClick: (product: WithId<Omit<Product, 'id'>>) => void;
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, onDetailClick }: ProductCardProps) {
   const { addToCart } = useCart();
   const { user } = useUser();
   const router = useRouter();
@@ -63,15 +64,26 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="font-bold text-primary text-base md:text-lg whitespace-nowrap">
           {formatPrice(product.price)}
         </p>
-        <Button
-          onClick={handleAddToCart}
-          variant="outline"
-          size="icon"
-          className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0 ml-2"
-        >
-          <ShoppingCart className="h-4 w-4" />
-          <span className="sr-only">Add to Cart</span>
-        </Button>
+        <div className='flex items-center gap-2'>
+            <Button
+            onClick={() => onDetailClick(product)}
+            variant="outline"
+            size="icon"
+            className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0"
+            >
+            <Eye className="h-4 w-4" />
+            <span className="sr-only">View Details</span>
+            </Button>
+            <Button
+            onClick={handleAddToCart}
+            variant="outline"
+            size="icon"
+            className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0"
+            >
+            <ShoppingCart className="h-4 w-4" />
+            <span className="sr-only">Add to Cart</span>
+            </Button>
+        </div>
       </CardFooter>
     </Card>
   );
