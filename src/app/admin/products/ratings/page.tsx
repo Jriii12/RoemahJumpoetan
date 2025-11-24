@@ -90,7 +90,9 @@ export default function RatingProdukPage() {
   
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    // Handle Firestore Timestamp object
+    const date = (dateString as any).toDate ? (dateString as any).toDate() : new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
