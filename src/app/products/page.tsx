@@ -55,9 +55,6 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<WithId<Omit<Product, 'id'>> | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | undefined>();
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [reviewText, setReviewText] = useState('');
 
 
   const firestore = useFirestore();
@@ -93,8 +90,6 @@ export default function ProductsPage() {
   const handleDetailClick = (product: WithId<Omit<Product, 'id'>>) => {
     setSelectedProduct(product);
     setSelectedSize(undefined); // Reset size when opening a new detail
-    setRating(0);
-    setReviewText('');
     setIsDetailOpen(true);
   };
   
@@ -128,51 +123,6 @@ export default function ProductsPage() {
         variant: 'destructive',
       });
       router.push('/login');
-    }
-  };
-
-  const handleRatingSubmit = async () => {
-    if (!firestore || !user || !selectedProduct) {
-        toast({
-            variant: 'destructive',
-            title: 'Gagal',
-            description: 'Anda harus login untuk memberi rating.',
-        });
-        return;
-    }
-    if (rating === 0) {
-        toast({
-            variant: 'destructive',
-            title: 'Gagal',
-            description: 'Silakan pilih rating bintang terlebih dahulu.',
-        });
-        return;
-    }
-
-    const ratingsColRef = collection(firestore, 'products', selectedProduct.id, 'ratings');
-    const newRatingData = {
-        userId: user.uid,
-        userName: user.displayName || 'Anonymous',
-        rating: rating,
-        comment: reviewText,
-        createdAt: new Date().toISOString(),
-    };
-
-    try {
-        await addDoc(ratingsColRef, newRatingData);
-        toast({
-            title: 'Terima Kasih!',
-            description: 'Rating Anda telah berhasil dikirimkan.',
-        });
-        setRating(0);
-        setReviewText('');
-    } catch (e) {
-        const permissionError = new FirestorePermissionError({
-            path: ratingsColRef.path,
-            operation: 'create',
-            requestResourceData: newRatingData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
     }
   };
 
@@ -302,32 +252,6 @@ export default function ProductsPage() {
                             </ul>
                         </DialogDescription>
                     </div>
-
-                    <div className="mt-4 pt-4 border-t">
-                        <h4 className="font-semibold mb-2">Beri Rating & Ulasan</h4>
-                         <div className="flex items-center gap-1 mb-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                key={star}
-                                className={cn(
-                                    'h-6 w-6 cursor-pointer transition-colors',
-                                    (hoverRating || rating) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                                )}
-                                onClick={() => setRating(star)}
-                                onMouseEnter={() => setHoverRating(star)}
-                                onMouseLeave={() => setHoverRating(0)}
-                                />
-                            ))}
-                        </div>
-                        <Textarea
-                            placeholder="Tulis ulasan Anda di sini..."
-                            value={reviewText}
-                            onChange={(e) => setReviewText(e.target.value)}
-                            className="mb-2"
-                        />
-                        <Button onClick={handleRatingSubmit} size="sm">Kirim Ulasan</Button>
-                    </div>
-
 
                      <div className="flex flex-col gap-2 mt-auto pt-4">
                         <Button size="lg" onClick={handleAddToCartFromDetail}>
