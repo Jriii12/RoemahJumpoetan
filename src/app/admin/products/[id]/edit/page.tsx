@@ -32,7 +32,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Save } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Product } from '@/lib/data';
@@ -60,11 +60,12 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default function EditProductPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
-  const productId = params.id;
+  const params = useParams();
+  const productId = params.id as string;
 
   const productDocRef = useMemoFirebase(() => {
     if(!firestore || !productId) return null;
