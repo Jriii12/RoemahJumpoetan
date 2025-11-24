@@ -45,7 +45,7 @@
         "role": {
             "type": "string",
             "description": "The user's role in the system.",
-            "enum": ["admin", "owner"]
+            "enum": ["admin", "owner", "kasir", "pegawai gudang"]
         }
       },
       "required": [
@@ -85,6 +85,10 @@
           "type": "string",
           "description": "URL of the product image.",
           "format": "uri"
+        },
+        "imageHint": {
+          "type": "string",
+          "description": "A hint for AI image generation or search."
         }
       },
       "required": [
@@ -93,7 +97,8 @@
         "description",
         "category",
         "price",
-        "imageUrl"
+        "imageUrl",
+        "imageHint"
       ]
     },
     "ShoppingCart": {
@@ -238,6 +243,32 @@
         "province",
         "street"
       ]
+    },
+    "PurchasedRawMaterial": {
+      "title": "Purchased Raw Material",
+      "type": "object",
+      "description": "Represents a raw material purchase record.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "description": "Name of the raw material." },
+        "quantity": { "type": "string", "description": "Quantity purchased (e.g., '50 meter')." },
+        "storeName": { "type": "string", "description": "Name of the store where it was purchased." },
+        "purchaseDate": { "type": "string", "format": "date" }
+      },
+      "required": ["id", "name", "quantity", "storeName", "purchaseDate"]
+    },
+    "UsedRawMaterial": {
+      "title": "Used Raw Material",
+      "type": "object",
+      "description": "Represents a record of raw material usage.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "description": "Name of the raw material used." },
+        "quantity": { "type": "string", "description": "Quantity used (e.g., '10 meter')." },
+        "purpose": { "type": "string", "description": "The purpose of using the material (e.g., 'Produksi Kemeja Batch #23')." },
+        "usageDate": { "type": "string", "format": "date" }
+      },
+      "required": ["id", "name", "quantity", "purpose", "usageDate"]
     }
   },
   "auth": {
@@ -321,7 +352,7 @@
       },
       {
         "path": "/users/{userId}/orders/{orderId}",
-        "definition": {
+        "definition":{
           "entityName": "Order",
           "schema": {
             "$ref": "#/backend/entities/Order"
@@ -353,6 +384,24 @@
               "description": "The unique identifier of the testimonial."
             }
           ]
+        }
+      },
+      {
+        "path": "/purchasedRawMaterials/{materialId}",
+        "definition": {
+          "entityName": "PurchasedRawMaterial",
+          "schema": { "$ref": "#/backend/entities/PurchasedRawMaterial" },
+          "description": "Stores records of purchased raw materials. Accessible by admin/warehouse staff.",
+          "params": [{ "name": "materialId", "description": "The unique ID of the purchase record." }]
+        }
+      },
+      {
+        "path": "/usedRawMaterials/{usageId}",
+        "definition": {
+          "entityName": "UsedRawMaterial",
+          "schema": { "$ref": "#/backend/entities/UsedRawMaterial" },
+          "description": "Stores records of used raw materials. Accessible by admin/warehouse staff.",
+          "params": [{ "name": "usageId", "description": "The unique ID of the usage record." }]
         }
       }
     ],
