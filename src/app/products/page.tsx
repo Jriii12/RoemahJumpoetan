@@ -152,7 +152,7 @@ export default function ProductsPage() {
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-3xl bg-card">
           {selectedProduct && (
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-start'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start'>
                 <div className='relative aspect-[3/4] rounded-lg overflow-hidden'>
                      <Image
                         src={selectedProduct.imageUrl}
@@ -162,9 +162,9 @@ export default function ProductsPage() {
                         className="object-cover"
                     />
                 </div>
-                <div className='flex flex-col h-full pt-4'>
+                <div className='flex flex-col h-full pt-2 md:pt-4'>
                     <DialogHeader>
-                        <DialogTitle className='font-headline text-3xl mb-2'>{selectedProduct.name}</DialogTitle>
+                        <DialogTitle className='font-headline text-2xl md:text-3xl mb-2'>{selectedProduct.name}</DialogTitle>
                          <div className='flex items-center justify-between'>
                             <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
                             <p className="font-bold text-primary text-xl">
@@ -173,7 +173,7 @@ export default function ProductsPage() {
                          </div>
                     </DialogHeader>
                     <div className='flex-grow my-4'>
-                        <DialogDescription className='text-base text-muted-foreground text-justify'>
+                        <DialogDescription className='text-base text-muted-foreground text-justify leading-relaxed'>
                             {selectedProduct.description}
                         </DialogDescription>
                     </div>
