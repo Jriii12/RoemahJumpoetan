@@ -56,6 +56,14 @@ type UsedMaterial = {
   usageDate: string;
 };
 
+// Initial data as requested by the user
+const initialPurchases: WithId<PurchasedMaterial>[] = [
+  { id: 'seed1', name: 'kain', quantity: '100 meter', storeName: 'toko cemerlang', purchaseDate: new Date().toISOString().split('T')[0] },
+  { id: 'seed2', name: 'pewarnaan zat sintesis', quantity: '5 kg', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
+  { id: 'seed3', name: 'gambir pewarnaan alam', quantity: '10 kg', storeName: 'babat toman', purchaseDate: new Date().toISOString().split('T')[0] },
+  { id: 'seed4', name: 'pelembit kain', quantity: '2 liter', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
+];
+
 const formatDate = (dateString: string) => {
     if (!dateString) return '-';
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -86,7 +94,7 @@ export default function BarangMentahPage() {
     if (!firestore) return null;
     return query(collection(firestore, 'purchasedRawMaterials'), orderBy('purchaseDate', 'desc'));
   }, [firestore]);
-  const { data: purchasedMaterials, isLoading: isLoadingPurchases } = useCollection<PurchasedMaterial>(purchasesQuery);
+  const { data: fetchedPurchases, isLoading: isLoadingPurchases } = useCollection<PurchasedMaterial>(purchasesQuery);
 
   const usagesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -94,6 +102,14 @@ export default function BarangMentahPage() {
   }, [firestore]);
   const { data: usedMaterials, isLoading: isLoadingUsages } = useCollection<UsedMaterial>(usagesQuery);
   
+  const purchasedMaterials = useMemo(() => {
+    // Combine seed data with fetched data, giving precedence to fetched data if not empty
+    if (fetchedPurchases && fetchedPurchases.length > 0) {
+      return fetchedPurchases;
+    }
+    return initialPurchases;
+  }, [fetchedPurchases]);
+
   const { uniqueMaterialNames, materialToStoreMap } = useMemo(() => {
     if (!purchasedMaterials) return { uniqueMaterialNames: [], materialToStoreMap: new Map() };
     const names = new Set<string>();
@@ -292,7 +308,7 @@ export default function BarangMentahPage() {
               </TableHeader>
               <TableBody>
                 {isLoadingPurchases ? (
-                    Array.from({length: 3}).map((_,i) => (
+                    Array.from({length: 4}).map((_,i) => (
                         <TableRow key={i}>
                             <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
                         </TableRow>
@@ -422,6 +438,7 @@ export default function BarangMentahPage() {
                 id="purchaseDate"
                 name="purchaseDate"
                 type="date"
+                defaultValue={new Date().toISOString().split('T')[0]}
                 required
               />
             </div>
@@ -486,6 +503,7 @@ export default function BarangMentahPage() {
                 id="usageDate"
                 name="usageDate"
                 type="date"
+                defaultValue={new Date().toISOString().split('T')[0]}
                 required
               />
             </div>
