@@ -47,9 +47,9 @@ export default function AboutPage() {
         {/* Bagian Gambar (Kiri) */}
         <div className="w-full lg:w-1/2 relative min-h-[400px] lg:min-h-full">
           <Image
-            src="https://picsum.photos/seed/founders/800/1000"
-            alt="Pendiri Roemah Jumpoetan"
-            data-ai-hint="artisan portrait"
+            src="https://picsum.photos/seed/jumputan/800/1000"
+            alt="Kain Jumputan Palembang"
+            data-ai-hint="jumputan fabric"
             fill
             className="object-cover hover:scale-105 transition-transform duration-700 ease-in-out"
           />
