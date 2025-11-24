@@ -13,6 +13,8 @@
  * - /users/{userId}/shoppingCarts/{shoppingCartId}: Stores a user's shopping cart. Only the owning user can access.
  * - /users/{userId}/orders/{orderId}: Stores a user's order history. Only the owning user can access.
  * - /testimonials/{testimonialId}: Stores customer testimonials. Publicly readable, and now creatable by authenticated users.
+ * - /purchasedRawMaterials/{materialId}: Stores raw material purchases. Writable by admins.
+ * - /usedRawMaterials/{usageId}: Stores raw material usages. Writable by admins.
  *
  * Key Security Decisions:
  * - User listing is disallowed for non-admins but allowed for admins.
@@ -104,6 +106,18 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if request.auth != null;
       allow update, delete: if false;
+    }
+    
+    /**
+     * @description Admin-only access for raw material records.
+     * @path /purchasedRawMaterials/{materialId}, /usedRawMaterials/{usageId}
+     */
+    match /purchasedRawMaterials/{materialId} {
+        allow read, write: if isAdmin();
+    }
+    
+    match /usedRawMaterials/{usageId} {
+        allow read, write: if isAdmin();
     }
   }
 }
