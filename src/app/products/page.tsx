@@ -33,6 +33,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Separator } from '@/components/ui/separator';
 
 const categories = [
   'Semua Produk',
@@ -48,6 +52,134 @@ const categories = [
 const uniqueCategories = [...new Set(categories)];
 const clothingCategories = ['Pakaian', 'Pakaian Wanita', 'Pakaian Pria', 'Fashion Muslim'];
 const availableSizes = ['M', 'L', 'XL', 'XXL'];
+
+const ratingSchema = z.object({
+  comment: z.string().min(10, 'Ulasan minimal 10 karakter').max(500, 'Ulasan maksimal 500 karakter'),
+  rating: z.number().min(1, 'Rating harus dipilih').max(5),
+});
+
+type RatingFormData = z.infer<typeof ratingSchema>;
+
+
+// --- Rating Form Component ---
+function ProductRatingForm({ productId }: { productId: string }) {
+    const { user, isUserLoading } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [hoveredRating, setHoveredRating] = useState(0);
+
+    const form = useForm<RatingFormData>({
+        resolver: zodResolver(ratingSchema),
+        defaultValues: { comment: '', rating: 0 },
+    });
+
+    const onSubmit = async (data: RatingFormData) => {
+        if (!user || !firestore) {
+            toast({
+                variant: 'destructive',
+                title: 'Gagal Mengirim',
+                description: 'Anda harus login untuk memberikan ulasan.',
+            });
+            return;
+        }
+
+        const productRatingsColRef = collection(firestore, `products/${productId}/ratings`);
+
+        const newRatingData = {
+            userId: user.uid,
+            userName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
+            comment: data.comment,
+            rating: data.rating,
+            createdAt: new Date().toISOString(),
+        };
+
+        addDoc(productRatingsColRef, newRatingData)
+            .then(() => {
+                toast({
+                    title: 'Terima Kasih!',
+                    description: 'Ulasan Anda telah berhasil dikirim.',
+                });
+                form.reset();
+            })
+            .catch(() => {
+                const optimisticPath = `${productRatingsColRef.path}/[new_rating]`;
+                const permissionError = new FirestorePermissionError({
+                    path: optimisticPath,
+                    operation: 'create',
+                    requestResourceData: newRatingData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
+    };
+
+    if (isUserLoading) return <Skeleton className="h-40 w-full" />;
+
+    if (!user) {
+        return (
+            <div className="text-center py-4 border-t mt-4">
+                <p className="text-muted-foreground mb-3 text-sm">Anda harus login untuk memberikan ulasan.</p>
+                <Button asChild size="sm">
+                    <Link href="/login">Login untuk Memberi Ulasan</Link>
+                </Button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="pt-6 border-t">
+            <h3 className="font-semibold text-lg mb-4">Beri Ulasan Anda</h3>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div>
+                    <Controller
+                        name="rating"
+                        control={form.control}
+                        render={({ field }) => (
+                            <div className="flex items-center gap-1.5">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                        key={star}
+                                        className={cn(
+                                            'h-6 w-6 cursor-pointer transition-colors',
+                                            (hoveredRating || field.value) >= star
+                                                ? 'text-yellow-400 fill-yellow-400'
+                                                : 'text-gray-400'
+                                        )}
+                                        onMouseEnter={() => setHoveredRating(star)}
+                                        onMouseLeave={() => setHoveredRating(0)}
+                                        onClick={() => field.onChange(star)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    />
+                    {form.formState.errors.rating && (
+                        <p className="text-sm text-destructive mt-2">{form.formState.errors.rating.message}</p>
+                    )}
+                </div>
+                <div>
+                    <Controller
+                        name="comment"
+                        control={form.control}
+                        render={({ field }) => (
+                            <Textarea
+                                {...field}
+                                placeholder="Bagaimana pendapat Anda tentang produk ini?"
+                                rows={4}
+                            />
+                        )}
+                    />
+                    {form.formState.errors.comment && (
+                        <p className="text-sm text-destructive mt-2">{form.formState.errors.comment.message}</p>
+                    )}
+                </div>
+                <Button type="submit" size="sm">
+                    Kirim Ulasan
+                </Button>
+            </form>
+        </div>
+    );
+}
+
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -210,60 +342,66 @@ export default function ProductsPage() {
                         />
                     </div>
                 </div>
-                <div className='flex flex-col h-full pt-2 md:pt-4'>
-                    <DialogHeader>
-                        <DialogTitle className='font-headline text-2xl md:text-3xl mb-2 text-left'>{selectedProduct.name}</DialogTitle>
-                         <div className='flex items-center justify-between text-left'>
-                            <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
-                            <p className="font-bold text-primary text-xl">
-                                {formatPrice(selectedProduct.price)}
-                            </p>
-                         </div>
-                    </DialogHeader>
-
-                    {isClothing && (
-                      <div className="my-4">
-                        <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
-                        <RadioGroup 
-                          value={selectedSize} 
-                          onValueChange={setSelectedSize}
-                          className="flex items-center gap-2"
-                        >
-                          {availableSizes.map(size => (
-                            <Label 
-                              key={size}
-                              htmlFor={`size-${size}`}
-                              className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
-                            >
-                              <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
-                              {size}
-                            </Label>
-                          ))}
-                        </RadioGroup>
-                      </div>
-                    )}
-                    
-                    <div className='flex-grow my-4 text-left'>
-                        <DialogDescription asChild>
-                            <div className="space-y-2 text-base text-muted-foreground leading-relaxed">
-                                {selectedProduct.description.split('\n').map((line, index) => (
-                                    line.trim() && <p key={index}>{line}</p>
-                                ))}
+                <div className='flex flex-col h-full'>
+                    <div className='flex-grow'>
+                        <DialogHeader>
+                            <DialogTitle className='font-headline text-2xl md:text-3xl mb-2 text-left'>{selectedProduct.name}</DialogTitle>
+                            <div className='flex items-center justify-between text-left'>
+                                <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
+                                <p className="font-bold text-primary text-xl">
+                                    {formatPrice(selectedProduct.price)}
+                                </p>
                             </div>
-                        </DialogDescription>
-                    </div>
+                        </DialogHeader>
 
-                     <div className="flex flex-col gap-2 mt-auto pt-4">
-                        <Button size="lg" onClick={handleAddToCartFromDetail}>
-                          <ShoppingCart className="mr-2 h-5 w-5" />
-                          Tambah ke Keranjang
-                        </Button>
-                        <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
-                          <Button variant="outline" size="lg" className="w-full">
-                            <Phone className="mr-2 h-5 w-5" />
-                            Hubungi Admin
-                          </Button>
-                        </a>
+                        {isClothing && (
+                        <div className="my-4">
+                            <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
+                            <RadioGroup 
+                            value={selectedSize} 
+                            onValueChange={setSelectedSize}
+                            className="flex items-center gap-2"
+                            >
+                            {availableSizes.map(size => (
+                                <Label 
+                                key={size}
+                                htmlFor={`size-${size}`}
+                                className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
+                                >
+                                <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                                {size}
+                                </Label>
+                            ))}
+                            </RadioGroup>
+                        </div>
+                        )}
+                        
+                        <div className='my-4 text-left'>
+                            <DialogDescription asChild>
+                                <div className="space-y-2 text-base text-muted-foreground leading-relaxed">
+                                    {selectedProduct.description.split('\n').map((line, index) => (
+                                        line.trim() && <p key={index}>{line}</p>
+                                    ))}
+                                </div>
+                            </DialogDescription>
+                        </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-4 mt-auto">
+                        <div className="flex flex-col gap-2">
+                            <Button size="lg" onClick={handleAddToCartFromDetail}>
+                            <ShoppingCart className="mr-2 h-5 w-5" />
+                            Tambah ke Keranjang
+                            </Button>
+                            <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="lg" className="w-full">
+                                <Phone className="mr-2 h-5 w-5" />
+                                Hubungi Admin
+                            </Button>
+                            </a>
+                        </div>
+
+                         <ProductRatingForm productId={selectedProduct.id} />
                       </div>
                 </div>
             </div>
