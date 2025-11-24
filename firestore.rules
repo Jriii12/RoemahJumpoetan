@@ -69,7 +69,8 @@ service cloud.firestore {
      * @path /products/{productId}
      */
     match /products/{productId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if isAdmin();
       allow write: if isAdmin();
 
        /**
