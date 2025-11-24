@@ -30,9 +30,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 const purchasedMaterials = [
-  { id: '1', name: 'Kain Katun Jepang', quantity: '50 meter', store: 'Toko Kain Maju Jaya', date: '2023-11-20' },
-  { id: '2', name: 'Benang Emas', quantity: '10 gulung', store: 'Supplier Benang Kilau', date: '2023-11-18' },
-  { id: '3', name: 'Pewarna Tekstil (Merah)', quantity: '5 botol', store: 'Toko Kimia Warna', date: '2023-11-15' },
+  { id: '1', name: 'Kain', quantity: '100 meter', store: 'Toko Cemerlang', date: '2024-05-10' },
+  { id: '2', name: 'Pewarnaan Zat Sintesis', quantity: '20 botol', store: 'Toko Fajar Setia', date: '2024-05-12' },
+  { id: '3', name: 'Gambir Pewarnaan Alam', quantity: '5 kg', store: 'Babat Toman', date: '2024-05-15' },
+  { id: '4', name: 'Pelembut Kain', quantity: '15 liter', store: 'Toko Fajar Setia', date: '2024-05-12' },
 ];
 
 const usedMaterials = [
