@@ -27,6 +27,8 @@ import Image from 'next/image';
 import { useCart } from '@/context/cart-context';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const categories = [
   'Semua Produk',
@@ -40,12 +42,15 @@ const categories = [
 ];
 
 const uniqueCategories = [...new Set(categories)];
+const clothingCategories = ['Pakaian', 'Pakaian Wanita', 'Pakaian Pria', 'Fashion Muslim'];
+const availableSizes = ['M', 'L', 'XL', 'XXL'];
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua Produk');
   const [selectedProduct, setSelectedProduct] = useState<WithId<Omit<Product, 'id'>> | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | undefined>();
 
   const firestore = useFirestore();
   const { user } = useUser();
@@ -74,9 +79,12 @@ export default function ProductsPage() {
       return matchesCategory && matchesSearch;
     });
   }, [searchTerm, selectedCategory, products]);
+  
+  const isClothing = selectedProduct && clothingCategories.includes(selectedProduct.category);
 
   const handleDetailClick = (product: WithId<Omit<Product, 'id'>>) => {
     setSelectedProduct(product);
+    setSelectedSize(undefined); // Reset size when opening a new detail
     setIsDetailOpen(true);
   };
   
@@ -91,8 +99,17 @@ export default function ProductsPage() {
   const handleAddToCartFromDetail = () => {
     if (!selectedProduct) return;
 
+    if (isClothing && !selectedSize) {
+      toast({
+        title: 'Pilih Ukuran',
+        description: 'Silakan pilih ukuran terlebih dahulu.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     if (user) {
-      addToCart(selectedProduct);
+      addToCart(selectedProduct, selectedSize);
       setIsDetailOpen(false);
     } else {
       toast({
@@ -196,6 +213,29 @@ export default function ProductsPage() {
                             </p>
                          </div>
                     </DialogHeader>
+
+                    {isClothing && (
+                      <div className="my-4">
+                        <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
+                        <RadioGroup 
+                          value={selectedSize} 
+                          onValueChange={setSelectedSize}
+                          className="flex items-center gap-2"
+                        >
+                          {availableSizes.map(size => (
+                            <Label 
+                              key={size}
+                              htmlFor={`size-${size}`}
+                              className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
+                            >
+                              <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                              {size}
+                            </Label>
+                          ))}
+                        </RadioGroup>
+                      </div>
+                    )}
+                    
                     <div className='flex-grow my-4 text-left'>
                         <DialogDescription asChild>
                             <ul className="list-disc list-inside space-y-2 text-base text-muted-foreground leading-relaxed">
@@ -205,6 +245,7 @@ export default function ProductsPage() {
                             </ul>
                         </DialogDescription>
                     </div>
+
                      <div className="flex flex-col gap-2 mt-auto">
                         <Button size="lg" onClick={handleAddToCartFromDetail}>
                           <ShoppingCart className="mr-2 h-5 w-5" />

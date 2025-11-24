@@ -46,7 +46,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
             <ScrollArea className="my-4 flex-1">
               <div className="flex flex-col gap-6 px-6">
                 {cartItems.map((item) => (
-                  <div key={item.product.id} className="flex items-start gap-4">
+                  <div key={item.id} className="flex items-start gap-4">
                     <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-border">
                       <Image
                         src={item.product.imageUrl}
@@ -58,6 +58,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                     </div>
                     <div className="flex flex-1 flex-col gap-1">
                       <h4 className="font-semibold text-primary">{item.product.name}</h4>
+                      {item.size && <p className="text-sm text-muted-foreground">Ukuran: {item.size}</p>}
                       <p className="text-sm text-muted-foreground">
                         {formatPrice(item.product.price)}
                       </p>
@@ -68,7 +69,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                           className="h-6 w-6"
                           onClick={() =>
                             updateQuantity(
-                              item.product.id,
+                              item.id,
                               item.quantity - 1
                             )
                           }
@@ -82,7 +83,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                           className="h-6 w-6"
                           onClick={() =>
                             updateQuantity(
-                              item.product.id,
+                              item.id,
                               item.quantity + 1
                             )
                           }
@@ -95,7 +96,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                       variant="ghost"
                       size="icon"
                       className="text-muted-foreground hover:text-destructive"
-                      onClick={() => removeFromCart(item.product.id)}
+                      onClick={() => removeFromCart(item.id)}
                     >
                       <Trash2 className="h-5 w-5" />
                     </Button>

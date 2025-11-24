@@ -6,15 +6,17 @@ import { useToast } from '@/hooks/use-toast';
 import type { WithId } from '@/firebase';
 
 export type CartItem = {
+  id: string; // Unique ID for the cart item (e.g., productId-size)
   product: WithId<Omit<Product, 'id'>>;
   quantity: number;
+  size?: string;
 };
 
 type CartContextType = {
   cartItems: CartItem[];
-  addToCart: (product: WithId<Omit<Product, 'id'>>) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: WithId<Omit<Product, 'id'>>, size?: string) => void;
+  removeFromCart: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
   cartCount: number;
   cartTotal: number;
 };
@@ -25,29 +27,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
 
-  const addToCart = (product: WithId<Omit<Product, 'id'>>) => {
+  const addToCart = (product: WithId<Omit<Product, 'id'>>, size?: string) => {
     setCartItems((prevItems) => {
+      // Create a unique ID for the cart item based on product ID and size
+      const cartItemId = size ? `${product.id}-${size}` : product.id;
+      
       const existingItem = prevItems.find(
-        (item) => item.product.id === product.id
+        (item) => item.id === cartItemId
       );
+
       if (existingItem) {
+        // If item with same ID (and size) exists, just increase quantity
         return prevItems.map((item) =>
-          item.product.id === product.id
+          item.id === cartItemId
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prevItems, { product, quantity: 1 }];
+      
+      // Otherwise, add a new item to the cart
+      return [...prevItems, { id: cartItemId, product, quantity: 1, size }];
     });
+
     toast({
       title: 'Added to Cart',
-      description: `${product.name} has been added to your cart.`,
+      description: `${product.name}${size ? ` (Size: ${size})` : ''} has been added.`,
     });
   };
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = (cartItemId: string) => {
     setCartItems((prevItems) =>
-      prevItems.filter((item) => item.product.id !== productId)
+      prevItems.filter((item) => item.id !== cartItemId)
     );
     toast({
       title: 'Removed from Cart',
@@ -56,14 +66,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (cartItemId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(cartItemId);
       return;
     }
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        item.id === cartItemId ? { ...item, quantity } : item
       )
     );
   };

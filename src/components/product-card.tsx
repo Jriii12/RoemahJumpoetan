@@ -13,8 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 
 type ProductCardProps = {
   product: WithId<Omit<Product, 'id'>>;
-  onDetailClick: (product: WithId<Omit<Product, 'id'>>) => void;
+  onDetailClick?: (product: WithId<Omit<Product, 'id'>>) => void;
 };
+
+const clothingCategories = ['Pakaian', 'Pakaian Wanita', 'Pakaian Pria', 'Fashion Muslim'];
 
 export function ProductCard({ product, onDetailClick }: ProductCardProps) {
   const { addToCart } = useCart();
@@ -23,15 +25,22 @@ export function ProductCard({ product, onDetailClick }: ProductCardProps) {
   const { toast } = useToast();
 
   const handleAddToCart = () => {
-    if (user) {
-      addToCart(product);
-    } else {
+    if (!user) {
       toast({
         title: 'Harap Login Terlebih Dahulu',
         description: 'Anda harus login untuk menambahkan produk ke keranjang.',
         variant: 'destructive',
       });
       router.push('/login');
+      return;
+    }
+
+    // Jika produk adalah pakaian dan ada fungsi onDetailClick, buka detail untuk memilih ukuran
+    if (clothingCategories.includes(product.category) && onDetailClick) {
+      onDetailClick(product);
+    } else {
+      // Jika bukan, atau jika tidak ada handler detail, langsung tambahkan ke keranjang
+      addToCart(product);
     }
   };
 
@@ -65,23 +74,25 @@ export function ProductCard({ product, onDetailClick }: ProductCardProps) {
           {formatPrice(product.price)}
         </p>
         <div className='flex items-center gap-2'>
+            {onDetailClick && (
+              <Button
+                onClick={() => onDetailClick(product)}
+                variant="outline"
+                size="icon"
+                className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0"
+              >
+                <Eye className="h-4 w-4" />
+                <span className="sr-only">View Details</span>
+              </Button>
+            )}
             <Button
-            onClick={() => onDetailClick(product)}
-            variant="outline"
-            size="icon"
-            className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0"
+              onClick={handleAddToCart}
+              variant="outline"
+              size="icon"
+              className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0"
             >
-            <Eye className="h-4 w-4" />
-            <span className="sr-only">View Details</span>
-            </Button>
-            <Button
-            onClick={handleAddToCart}
-            variant="outline"
-            size="icon"
-            className="hover:bg-primary hover:text-primary-foreground rounded-full flex-shrink-0"
-            >
-            <ShoppingCart className="h-4 w-4" />
-            <span className="sr-only">Add to Cart</span>
+              <ShoppingCart className="h-4 w-4" />
+              <span className="sr-only">Add to Cart</span>
             </Button>
         </div>
       </CardFooter>
