@@ -191,16 +191,6 @@ export default function BarangJadiPage() {
     }
   };
   
-  const finalStock = useMemo(() => {
-    if (!products) return [];
-    return products.map(p => ({
-        id: p.id,
-        name: p.name,
-        category: p.category,
-        final: p.stock || 0
-    }));
-  }, [products]);
-
   const isLoading = isLoadingProducts || isLoadingInbound || isLoadingOutbound;
 
   return (
@@ -228,12 +218,12 @@ export default function BarangJadiPage() {
                       <TableCell colSpan={3}><Skeleton className="h-8 w-full" /></TableCell>
                     </TableRow>
                   ))
-                ) : finalStock.length > 0 ? (
-                  finalStock.map((item, index) => (
+                ) : products && products.length > 0 ? (
+                  products.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className='font-medium'>{item.name}</TableCell>
                       <TableCell>{item.category}</TableCell>
-                      <TableCell className='font-bold text-right'>{item.final}</TableCell>
+                      <TableCell className='font-bold text-right'>{item.stock || 0}</TableCell>
                     </TableRow>
                   ))
                 ) : (
