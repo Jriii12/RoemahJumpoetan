@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useFirestore, WithId } from '@/firebase';
-import { collectionGroup, query, orderBy, getDocs } from 'firebase/firestore';
+import { collectionGroup, query, orderBy, getDocs, collection } from 'firebase/firestore';
 import {
   Table,
   TableBody,
