@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useFirestore, WithId } from '@/firebase';
-import { collectionGroup, query, orderBy, getDocs, collection } from 'firebase/firestore';
+import { collectionGroup, query, getDocs, collection }from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -63,15 +63,14 @@ export default function RatingProdukPage() {
             });
             setProductsMap(productsData);
             
-            // 2. Use a collection group query to get all ratings
+            // 2. Use a collection group query to get all ratings (without server-side ordering)
             const ratingsQuery = query(
-                collectionGroup(firestore, 'ratings'), 
-                orderBy('createdAt', 'desc')
+                collectionGroup(firestore, 'ratings')
             );
 
             const ratingsSnapshot = await getDocs(ratingsQuery);
             
-            const collectedRatings: AggregatedRating[] = ratingsSnapshot.docs.map(doc => {
+            let collectedRatings: AggregatedRating[] = ratingsSnapshot.docs.map(doc => {
                 const ratingData = doc.data() as ProductRating;
                 const productId = doc.ref.parent.parent?.id; // Get parent product ID
                 const productInfo = productId ? productsData.get(productId) : undefined;
@@ -84,6 +83,13 @@ export default function RatingProdukPage() {
                 };
             });
             
+            // 3. Sort the ratings on the client-side
+            collectedRatings.sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateB - dateA; // Sort descending
+            });
+
             setAllRatings(collectedRatings);
 
         } catch (error: any) {
