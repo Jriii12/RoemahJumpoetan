@@ -11,7 +11,7 @@ export default function Home() {
     <div className="bg-gradient-to-b from-background to-background/80">
       <div className="h-[calc(80vh-80px)] min-h-[500px] flex items-center justify-center relative overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1594734415578-00fc9540929b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmYWJyaWMlMjB0ZXh0dXJlfGVufDB8fHx8MTc2Mjk1MzMxMXww&ixlib=rb-4.1.0&q=80&w=1080"
+          src="/img/kain.jpeg"
           alt="A close-up of a beautifully textured Jumputan fabric."
           data-ai-hint="fabric texture"
           fill
