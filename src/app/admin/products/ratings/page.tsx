@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useFirestore, WithId } from '@/firebase';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { collectionGroup, query, orderBy, getDocs } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -32,71 +32,75 @@ type ProductRating = {
   rating: number;
   comment: string;
   createdAt: string;
-  productId?: string;
-  productName?: string;
-  productImageUrl?: string;
 };
+
+// We will fetch product info separately or it might be denormalized in the rating doc.
+// For now, let's just fetch ratings and display what we have.
+type AggregatedRating = WithId<ProductRating> & {
+    productName?: string;
+    productImageUrl?: string;
+};
+
 
 export default function RatingProdukPage() {
   const firestore = useFirestore();
-  const [allRatings, setAllRatings] = React.useState<WithId<ProductRating>[]>([]);
+  const [allRatings, setAllRatings] = React.useState<AggregatedRating[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [productsMap, setProductsMap] = React.useState<Map<string, Omit<Product, 'id'>>>(new Map());
 
-  // Fetch all ratings using a more robust method without collectionGroup
+
   React.useEffect(() => {
-    const fetchAllRatings = async () => {
-      if (!firestore) return;
-      setIsLoading(true);
+    if (!firestore) return;
 
-      try {
-        const productsCollectionRef = collection(firestore, 'products');
-        const productsSnapshot = await getDocs(productsCollectionRef).catch(err => {
-            const permissionError = new FirestorePermissionError({
-              path: productsCollectionRef.path,
-              operation: 'list',
+    const fetchRatingsAndProducts = async () => {
+        setIsLoading(true);
+        try {
+            // 1. Fetch all products and create a map
+            const productsSnapshot = await getDocs(collection(firestore, 'products'));
+            const productsData = new Map<string, Omit<Product, 'id'>>();
+            productsSnapshot.forEach(doc => {
+                productsData.set(doc.id, doc.data() as Omit<Product, 'id'>);
             });
-            errorEmitter.emit('permission-error', permissionError);
-            // Return a resolved promise with an empty snapshot to prevent further errors
-            return Promise.resolve({ docs: [] as any[] });
-        });
-        
-        const productsData = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as WithId<Product>[];
-        
-        let collectedRatings: WithId<ProductRating>[] = [];
+            setProductsMap(productsData);
+            
+            // 2. Use a collection group query to get all ratings
+            const ratingsQuery = query(
+                collectionGroup(firestore, 'ratings'), 
+                orderBy('createdAt', 'desc')
+            );
 
-        for (const product of productsData) {
-          const ratingsQuery = query(collection(firestore, `products/${product.id}/ratings`), orderBy('createdAt', 'desc'));
-          const ratingsSnapshot = await getDocs(ratingsQuery);
-          
-          const productRatings = ratingsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...(doc.data() as Omit<ProductRating, 'id'>),
-            productId: product.id,
-            productName: product.name,
-            productImageUrl: product.imageUrl,
-          }));
+            const ratingsSnapshot = await getDocs(ratingsQuery);
+            
+            const collectedRatings: AggregatedRating[] = ratingsSnapshot.docs.map(doc => {
+                const ratingData = doc.data() as ProductRating;
+                const productId = doc.ref.parent.parent?.id; // Get parent product ID
+                const productInfo = productId ? productsData.get(productId) : undefined;
+                
+                return {
+                    id: doc.id,
+                    ...ratingData,
+                    productName: productInfo?.name,
+                    productImageUrl: productInfo?.imageUrl
+                };
+            });
+            
+            setAllRatings(collectedRatings);
 
-          collectedRatings = [...collectedRatings, ...productRatings];
+        } catch (error: any) {
+            console.error("Error fetching ratings:", error);
+            if (error.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                  path: `**/ratings`, // Representing a collection group query
+                  operation: 'list',
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            }
+        } finally {
+            setIsLoading(false);
         }
-
-        // Sort all ratings globally by date
-        collectedRatings.sort((a, b) => {
-            const dateA = new Date(a.createdAt);
-            const dateB = new Date(b.createdAt);
-            return dateB.getTime() - dateA.getTime();
-        });
-        
-        setAllRatings(collectedRatings);
-
-      } catch (error) {
-        // This catch is for unexpected errors during the process, not permission errors which are handled inside.
-        console.error("Error fetching ratings:", error);
-      } finally {
-        setIsLoading(false);
-      }
     };
 
-    fetchAllRatings();
+    fetchRatingsAndProducts();
   }, [firestore]);
   
   const formatDate = (dateValue: any) => {
@@ -164,7 +168,7 @@ export default function RatingProdukPage() {
                                     <Image src={rating.productImageUrl} alt={rating.productName || 'product'} fill className='object-cover' sizes="40px" />
                                 </div>
                             )}
-                            <span className='font-medium'>{rating.productName}</span>
+                            <span className='font-medium'>{rating.productName || 'Produk tidak ditemukan'}</span>
                           </div>
                       </TableCell>
                       <TableCell>{rating.userName}</TableCell>
