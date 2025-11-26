@@ -54,6 +54,7 @@ const menuItems = [
     subItems: [
       { label: 'Barang Mentah', href: '/admin/warehouse/inbound' },
       { label: 'Barang Jadi', href: '/admin/warehouse/outbound' },
+      { label: 'Penjahit', href: '/admin/warehouse/penjahit' },
     ],
   },
   {
