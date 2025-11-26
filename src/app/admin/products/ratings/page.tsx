@@ -18,6 +18,13 @@ import {
   CardTitle,
   CardDescription
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,11 +38,9 @@ type ProductRating = {
   userName: string;
   rating: number;
   comment: string;
-  createdAt: string;
+  createdAt: string; // Should be ISO string or Firebase Timestamp
 };
 
-// We will fetch product info separately or it might be denormalized in the rating doc.
-// For now, let's just fetch ratings and display what we have.
 type AggregatedRating = WithId<ProductRating> & {
     productName?: string;
     productImageUrl?: string;
@@ -47,6 +52,8 @@ export default function RatingProdukPage() {
   const [allRatings, setAllRatings] = React.useState<AggregatedRating[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [productsMap, setProductsMap] = React.useState<Map<string, Omit<Product, 'id'>>>(new Map());
+  const [selectedRating, setSelectedRating] = React.useState<AggregatedRating | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -65,7 +72,6 @@ export default function RatingProdukPage() {
       } catch (error) {
         console.error("Error fetching products:", error);
         setIsLoading(false);
-        // Handle product fetch error if necessary
       }
       return new Map();
     };
@@ -119,10 +125,8 @@ export default function RatingProdukPage() {
       return unsubscribe;
     };
     
-    // Call setupListener and store the unsubscribe function
     const unsubscribePromise = setupListener();
 
-    // Cleanup function
     return () => {
       unsubscribePromise.then(unsubscribe => {
         if (unsubscribe) {
@@ -160,49 +164,107 @@ export default function RatingProdukPage() {
     )
   }
 
+  const handleRowClick = (rating: AggregatedRating) => {
+    setSelectedRating(rating);
+    setIsDetailOpen(true);
+  }
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Rating Produk</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Ulasan Pelanggan</CardTitle>
-          <CardDescription>
-            Berikut adalah daftar ulasan dan rating yang diberikan oleh pelanggan untuk setiap produk.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-              <TableHeader>
-              <TableRow>
-                  <TableHead className='w-[120px]'>Rating</TableHead>
-                  <TableHead>Ulasan</TableHead>
-              </TableRow>
-              </TableHeader>
-              <TableBody>
-              {isLoading ? (
-                  Array.from({length: 5}).map((_, i) => (
-                    <TableRow key={i}>
-                        <TableCell colSpan={2}><Skeleton className="h-12 w-full" /></TableCell>
-                    </TableRow>
-                ))
-              ) : allRatings.length > 0 ? (
-                  allRatings.map((rating) => (
-                  <TableRow key={rating.id}>
-                      <TableCell>{renderStars(rating.rating)}</TableCell>
-                      <TableCell className='text-muted-foreground'>{rating.comment || '-'}</TableCell>
-                  </TableRow>
-                  ))
-              ) : (
+    <>
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Rating Produk</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Ulasan Pelanggan</CardTitle>
+            <CardDescription>
+              Berikut adalah daftar ulasan dan rating yang diberikan oleh pelanggan untuk setiap produk. Klik baris untuk melihat detail.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+                <TableHeader>
                 <TableRow>
-                    <TableCell colSpan={2} className="h-48 text-center text-muted-foreground">
-                        Belum ada rating yang diberikan.
-                    </TableCell>
+                    <TableHead className='w-[120px]'>Rating</TableHead>
+                    <TableHead>Ulasan</TableHead>
                 </TableRow>
-              )}
-              </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                </TableHeader>
+                <TableBody>
+                {isLoading ? (
+                    Array.from({length: 5}).map((_, i) => (
+                      <TableRow key={i}>
+                          <TableCell colSpan={2}><Skeleton className="h-12 w-full" /></TableCell>
+                      </TableRow>
+                  ))
+                ) : allRatings.length > 0 ? (
+                    allRatings.map((rating) => (
+                    <TableRow key={rating.id} onClick={() => handleRowClick(rating)} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell>{renderStars(rating.rating)}</TableCell>
+                        <TableCell className='text-muted-foreground truncate max-w-lg'>{rating.comment || '-'}</TableCell>
+                    </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                      <TableCell colSpan={2} className="h-48 text-center text-muted-foreground">
+                          Belum ada rating yang diberikan.
+                      </TableCell>
+                  </TableRow>
+                )}
+                </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="sm:max-w-lg">
+            {selectedRating && (
+                <>
+                <DialogHeader>
+                    <DialogTitle>Detail Ulasan</DialogTitle>
+                    <DialogDescription>
+                        Ulasan lengkap dari pelanggan untuk produk.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                    {/* Product Info */}
+                    <div className="flex items-start gap-4 p-4 rounded-md border bg-muted/30">
+                        {selectedRating.productImageUrl && (
+                            <div className="relative h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
+                                <Image src={selectedRating.productImageUrl} alt={selectedRating.productName || 'Produk'} fill className="object-cover" />
+                            </div>
+                        )}
+                        <div>
+                            <p className="font-semibold text-sm text-muted-foreground">PRODUK</p>
+                            <p className="font-bold text-foreground">{selectedRating.productName || 'Produk tidak ditemukan'}</p>
+                        </div>
+                    </div>
+                    {/* User & Date */}
+                    <div className='space-y-4'>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p className="font-semibold text-muted-foreground">PELANGGAN</p>
+                                <p className="text-foreground">{selectedRating.userName}</p>
+                            </div>
+                            <div>
+                                <p className="font-semibold text-muted-foreground">TANGGAL</p>
+                                <p className="text-foreground">{formatDate(selectedRating.createdAt)}</p>
+                            </div>
+                        </div>
+                         {/* Rating and Comment */}
+                        <div>
+                            <p className="font-semibold text-muted-foreground text-sm">RATING</p>
+                            {renderStars(selectedRating.rating)}
+                        </div>
+                        <div>
+                            <p className="font-semibold text-muted-foreground text-sm">ULASAN</p>
+                            <p className="text-foreground text-base leading-relaxed mt-1">{selectedRating.comment}</p>
+                        </div>
+                    </div>
+                </div>
+                </>
+            )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
