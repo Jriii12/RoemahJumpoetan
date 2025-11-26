@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useFirestore, WithId } from '@/firebase';
-import { collectionGroup, query, getDocs, collection }from 'firebase/firestore';
+import { collectionGroup, query, onSnapshot, collection, getDocs }from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -52,61 +52,85 @@ export default function RatingProdukPage() {
   React.useEffect(() => {
     if (!firestore) return;
 
-    const fetchRatingsAndProducts = async () => {
-        setIsLoading(true);
-        try {
-            // 1. Fetch all products and create a map
-            const productsSnapshot = await getDocs(collection(firestore, 'products'));
-            const productsData = new Map<string, Omit<Product, 'id'>>();
-            productsSnapshot.forEach(doc => {
-                productsData.set(doc.id, doc.data() as Omit<Product, 'id'>);
-            });
-            setProductsMap(productsData);
-            
-            // 2. Use a collection group query to get all ratings (without server-side ordering)
-            const ratingsQuery = query(
-                collectionGroup(firestore, 'ratings')
-            );
-
-            const ratingsSnapshot = await getDocs(ratingsQuery);
-            
-            let collectedRatings: AggregatedRating[] = ratingsSnapshot.docs.map(doc => {
-                const ratingData = doc.data() as ProductRating;
-                const productId = doc.ref.parent.parent?.id; // Get parent product ID
-                const productInfo = productId ? productsData.get(productId) : undefined;
-                
-                return {
-                    id: doc.id,
-                    ...ratingData,
-                    productName: productInfo?.name,
-                    productImageUrl: productInfo?.imageUrl
-                };
-            });
-            
-            // 3. Sort the ratings on the client-side
-            collectedRatings.sort((a, b) => {
-                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                return dateB - dateA; // Sort descending
-            });
-
-            setAllRatings(collectedRatings);
-
-        } catch (error: any) {
-            console.error("Error fetching ratings:", error);
-            if (error.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({
-                  path: `**/ratings`, // Representing a collection group query
-                  operation: 'list',
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            }
-        } finally {
-            setIsLoading(false);
-        }
+    // 1. Fetch all products first and create a map. This is done once.
+    const fetchProducts = async () => {
+      try {
+        const productsSnapshot = await getDocs(collection(firestore, 'products'));
+        const productsData = new Map<string, Omit<Product, 'id'>>();
+        productsSnapshot.forEach(doc => {
+          productsData.set(doc.id, doc.data() as Omit<Product, 'id'>);
+        });
+        setProductsMap(productsData);
+        return productsData; // Return for use in the listener
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        setIsLoading(false);
+        // Handle product fetch error if necessary
+      }
+      return new Map();
     };
 
-    fetchRatingsAndProducts();
+    const setupListener = async () => {
+      setIsLoading(true);
+      const fetchedProductsMap = await fetchProducts();
+
+      // 2. Use a collection group query to listen for all ratings in real-time
+      const ratingsQuery = query(collectionGroup(firestore, 'ratings'));
+
+      const unsubscribe = onSnapshot(ratingsQuery, 
+        (ratingsSnapshot) => {
+          let collectedRatings: AggregatedRating[] = ratingsSnapshot.docs.map(doc => {
+            const ratingData = doc.data() as ProductRating;
+            const productId = doc.ref.parent.parent?.id; // Get parent product ID
+            const productInfo = productId ? fetchedProductsMap.get(productId) : undefined;
+            
+            return {
+              id: doc.id,
+              ...ratingData,
+              productName: productInfo?.name,
+              productImageUrl: productInfo?.imageUrl
+            };
+          });
+          
+          // 3. Sort the ratings on the client-side
+          collectedRatings.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA; // Sort descending
+          });
+
+          setAllRatings(collectedRatings);
+          setIsLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching ratings with onSnapshot:", error);
+          if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+              path: `**/ratings`, // Representing a collection group query
+              operation: 'list',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+          }
+          setIsLoading(false);
+        }
+      );
+
+      // Return the unsubscribe function to be called on component unmount
+      return unsubscribe;
+    };
+    
+    // Call setupListener and store the unsubscribe function
+    const unsubscribePromise = setupListener();
+
+    // Cleanup function
+    return () => {
+      unsubscribePromise.then(unsubscribe => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      });
+    };
+
   }, [firestore]);
   
   const formatDate = (dateValue: any) => {
