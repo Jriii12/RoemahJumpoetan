@@ -120,11 +120,8 @@ export function Header() {
   const [isCartOpen, setIsCartOpen] = React.useState(false);
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-    
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -241,7 +238,7 @@ export function Header() {
               onClick={() => setIsCartOpen(true)}
             >
               <ShoppingCart className="h-5 w-5" />
-              {isClient && cartCount > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground shadow-sm">
                   {cartCount}
                 </span>
@@ -252,7 +249,7 @@ export function Header() {
             <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
 
             <div className="hidden sm:block">
-              {isClient ? <UserAuthControl /> : <Skeleton className="h-9 w-24 rounded-full" />}
+              <UserAuthControl />
             </div>
           </div>
         </div>
