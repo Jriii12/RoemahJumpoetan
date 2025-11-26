@@ -345,7 +345,7 @@ export default function PesananPage() {
             </DialogHeader>
             {receiptOrder && <OrderReceipt order={receiptOrder} ref={receiptRef} />}
             <DialogFooter className='non-printable'>
-                <Button variant="outline" onClick={() => setReceiptOrder(null)}>Tutup</Button>
+                <Button variant="outline" onClick={() => setReceiptOrder(null)}>Kembali</Button>
                 <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Cetak Resi</Button>
             </DialogFooter>
         </DialogContent>
