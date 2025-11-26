@@ -214,6 +214,7 @@ export default function PenjahitPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Nama Pekerjaan</TableHead>
                   <TableHead>Model Baju</TableHead>
                   <TableHead>Jenis Kain</TableHead>
                   <TableHead>Jenis Baju</TableHead>
@@ -226,7 +227,7 @@ export default function PenjahitPage() {
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={6}>
+                      <TableCell colSpan={7}>
                         <Skeleton className="h-10 w-full" />
                       </TableCell>
                     </TableRow>
@@ -234,7 +235,8 @@ export default function PenjahitPage() {
                 ) : jobs && jobs.length > 0 ? (
                   jobs.map((job) => (
                     <TableRow key={job.id}>
-                      <TableCell className="font-medium">{job.clothingModel}</TableCell>
+                      <TableCell className="font-medium">{job.jobName}</TableCell>
+                      <TableCell>{job.clothingModel}</TableCell>
                       <TableCell>{job.fabricType}</TableCell>
                       <TableCell>{job.clothingType}</TableCell>
                       <TableCell>{formatDate(job.startDate)}</TableCell>
@@ -272,7 +274,7 @@ export default function PenjahitPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Belum ada pekerjaan yang ditambahkan.
                     </TableCell>
                   </TableRow>
