@@ -174,42 +174,27 @@ export default function RatingProdukPage() {
           <Table>
               <TableHeader>
               <TableRow>
-                  <TableHead className='w-[250px]'>Produk</TableHead>
-                  <TableHead className='w-[150px]'>Pelanggan</TableHead>
                   <TableHead className='w-[120px]'>Rating</TableHead>
                   <TableHead>Ulasan</TableHead>
-                  <TableHead className='w-[150px]'>Tanggal</TableHead>
               </TableRow>
               </TableHeader>
               <TableBody>
               {isLoading ? (
                   Array.from({length: 5}).map((_, i) => (
                     <TableRow key={i}>
-                        <TableCell colSpan={5}><Skeleton className="h-12 w-full" /></TableCell>
+                        <TableCell colSpan={2}><Skeleton className="h-12 w-full" /></TableCell>
                     </TableRow>
                 ))
               ) : allRatings.length > 0 ? (
                   allRatings.map((rating) => (
                   <TableRow key={rating.id}>
-                      <TableCell>
-                          <div className='flex items-center gap-3'>
-                            {rating.productImageUrl && (
-                                <div className='relative h-10 w-10 rounded-md overflow-hidden'>
-                                    <Image src={rating.productImageUrl} alt={rating.productName || 'product'} fill className='object-cover' sizes="40px" />
-                                </div>
-                            )}
-                            <span className='font-medium'>{rating.productName || 'Produk tidak ditemukan'}</span>
-                          </div>
-                      </TableCell>
-                      <TableCell>{rating.userName}</TableCell>
                       <TableCell>{renderStars(rating.rating)}</TableCell>
                       <TableCell className='text-muted-foreground'>{rating.comment || '-'}</TableCell>
-                      <TableCell>{formatDate(rating.createdAt)}</TableCell>
                   </TableRow>
                   ))
               ) : (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                    <TableCell colSpan={2} className="h-48 text-center text-muted-foreground">
                         Belum ada rating yang diberikan.
                     </TableCell>
                 </TableRow>
