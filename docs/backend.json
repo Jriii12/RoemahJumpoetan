@@ -331,6 +331,21 @@
         "purpose": { "type": "string", "description": "The reason for the outbound transaction." }
       },
       "required": ["id", "productId", "productName", "quantity", "outboundDate", "purpose"]
+    },
+    "SewingJob": {
+      "title": "Sewing Job",
+      "type": "object",
+      "description": "Represents a job assigned to a tailor.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the sewing job." },
+        "jobName": { "type": "string", "description": "Name or title of the sewing job." },
+        "clothingModel": { "type": "string", "description": "The model of the clothing to be sewn." },
+        "fabricType": { "type": "string", "description": "The type of fabric to be used." },
+        "clothingType": { "type": "string", "description": "The type of clothing (e.g., Shirt, Dress)." },
+        "startDate": { "type": "string", "format": "date", "description": "The date the job was handed over to the tailor." },
+        "dueDate": { "type": "string", "format": "date", "description": "The date the job is expected to be completed." }
+      },
+      "required": ["id", "jobName", "clothingModel", "fabricType", "clothingType", "startDate", "dueDate"]
     }
   },
   "auth": {
@@ -490,6 +505,15 @@
           "schema": { "$ref": "#/backend/entities/OutboundFinishedGood" },
           "description": "Stores records of finished goods leaving the warehouse. Accessible by admin/warehouse staff.",
           "params": [{ "name": "outboundId", "description": "The unique ID of the outbound record." }]
+        }
+      },
+      {
+        "path": "/sewingJobs/{jobId}",
+        "definition": {
+          "entityName": "SewingJob",
+          "schema": { "$ref": "#/backend/entities/SewingJob" },
+          "description": "Stores job assignments for tailors. Accessible by admin/owner roles.",
+          "params": [{ "name": "jobId", "description": "The unique ID for the sewing job." }]
         }
       }
     ],

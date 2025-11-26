@@ -17,6 +17,7 @@
  * - /usedRawMaterials/{usageId}: Stores raw material usages. Accessible only to admin/owner roles.
  * - /inboundFinishedGoods/{inboundId}: Records of finished goods entering warehouse. Accessible only to admin/owner.
  * - /outboundFinishedGoods/{outboundId}: Records of finished goods leaving warehouse. Accessible only to admin/owner.
+ * - /sewingJobs/{jobId}: Records of jobs assigned to tailors. Accessible by authenticated users.
  *
  * Key Security Decisions:
  * - User listing is disallowed for non-admins but allowed for admins.
@@ -41,7 +42,7 @@ service cloud.firestore {
     
     function isAdmin() {
       // Checks if the user's role in their Firestore document is an admin role.
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'owner', 'kasir', 'pegawai gudang'];
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'owner'];
     }
 
     /**
@@ -121,27 +122,31 @@ service cloud.firestore {
     }
     
     /**
-     * @description Admin-only access for raw material records.
-     * @path /purchasedRawMaterials/{materialId}, /usedRawMaterials/{usageId}
+     * @description Authenticated user access for raw material and finished goods records.
+     * @path /purchasedRawMaterials/{materialId}, /usedRawMaterials/{usageId}, etc.
      */
     match /purchasedRawMaterials/{materialId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth != null;
     }
     
     match /usedRawMaterials/{usageId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth != null;
     }
     
-    /**
-     * @description Admin-only access for finished goods records.
-     * @path /inboundFinishedGoods/{inboundId}, /outboundFinishedGoods/{outboundId}
-     */
     match /inboundFinishedGoods/{inboundId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth != null;
     }
 
     match /outboundFinishedGoods/{outboundId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth != null;
+    }
+
+    /**
+     * @description Authenticated user access for sewing jobs.
+     * @path /sewingJobs/{jobId}
+     */
+    match /sewingJobs/{jobId} {
+        allow read, write: if request.auth != null;
     }
   }
 }
