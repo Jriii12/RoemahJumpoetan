@@ -13,11 +13,10 @@
  * - /users/{userId}/shoppingCarts/{shoppingCartId}: Stores a user's shopping cart. Only the owning user can access.
  * - /orders/{orderId}: Stores order history for all users. Writable by authenticated users, readable by admins.
  * - /testimonials/{testimonialId}: Stores customer testimonials. Publicly readable, and now creatable by authenticated users.
- * - /purchasedRawMaterials/{materialId}: Stores raw material purchases. Writable by authenticated users.
- * - /usedRawMaterials/{usageId}: Stores raw material usages. Writable by authenticated users.
- * - /inboundFinishedGoods/{inboundId}: Stores records of finished goods entering the warehouse. Writable by authenticated users.
- * - /outboundFinishedGoods/{outboundId}: Stores records of finished goods leaving the warehouse for non-sale purposes. Writable by authenticated users.
- * - /sewingJobs/{jobId}: Stores job records for tailors. Writable by authenticated users.
+ * - /purchasedRawMaterials/{materialId}: Stores raw material purchases. Accessible only to admin/owner roles.
+ * - /usedRawMaterials/{usageId}: Stores raw material usages. Accessible only to admin/owner roles.
+ * - /inboundFinishedGoods/{inboundId}: Records of finished goods entering warehouse. Accessible only to admin/owner.
+ * - /outboundFinishedGoods/{outboundId}: Records of finished goods leaving warehouse. Accessible only to admin/owner.
  *
  * Key Security Decisions:
  * - User listing is disallowed for non-admins but allowed for admins.
@@ -42,7 +41,7 @@ service cloud.firestore {
     
     function isAdmin() {
       // Checks if the user's role in their Firestore document is an admin role.
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'owner'];
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'owner', 'kasir', 'pegawai gudang'];
     }
 
     /**
@@ -122,35 +121,27 @@ service cloud.firestore {
     }
     
     /**
-     * @description Admin-only access for raw material records. Now allows any authenticated user.
+     * @description Admin-only access for raw material records.
      * @path /purchasedRawMaterials/{materialId}, /usedRawMaterials/{usageId}
      */
     match /purchasedRawMaterials/{materialId} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isAdmin();
     }
     
     match /usedRawMaterials/{usageId} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isAdmin();
     }
     
     /**
-     * @description Admin-only access for finished goods records. Now allows any authenticated user.
+     * @description Admin-only access for finished goods records.
      * @path /inboundFinishedGoods/{inboundId}, /outboundFinishedGoods/{outboundId}
      */
     match /inboundFinishedGoods/{inboundId} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isAdmin();
     }
 
     match /outboundFinishedGoods/{outboundId} {
-        allow read, write: if request.auth != null;
-    }
-    
-    /**
-     * @description Admin-only access for tailor job records. Now allows any authenticated user.
-     * @path /sewingJobs/{jobId}
-     */
-    match /sewingJobs/{jobId} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isAdmin();
     }
   }
 }
