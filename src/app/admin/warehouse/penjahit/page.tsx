@@ -56,8 +56,6 @@ import {
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
 
 type SewingJob = {
   jobName: string;
@@ -152,48 +150,41 @@ export default function PenjahitPage() {
       dueDate,
     };
 
-    if (editingJob) {
-      const docRef = doc(firestore, 'sewingJobs', editingJob.id);
-      updateDoc(docRef, jobData)
-        .then(() => {
+    try {
+        if (editingJob) {
+          const docRef = doc(firestore, 'sewingJobs', editingJob.id);
+          await updateDoc(docRef, jobData);
           toast({ title: 'Pekerjaan berhasil diperbarui.' });
-          setDialogOpen(false);
-        })
-        .catch((err) => {
-          const permissionError = new FirestorePermissionError({
-            path: docRef.path,
-            operation: 'update',
-            requestResourceData: jobData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
-    } else {
-      const jobsColRef = collection(firestore, 'sewingJobs');
-      addDoc(jobsColRef, jobData)
-        .then(() => {
+        } else {
+          const jobsColRef = collection(firestore, 'sewingJobs');
+          await addDoc(jobsColRef, jobData);
           toast({ title: 'Pekerjaan baru berhasil ditambahkan.' });
-          setDialogOpen(false);
+        }
+        setDialogOpen(false);
+    } catch (err) {
+        console.error(err);
+        toast({ 
+            variant: 'destructive',
+            title: 'Gagal menyimpan',
+            description: 'Terjadi kesalahan saat menyimpan data pekerjaan.'
         })
-        .catch((err) => {
-          const permissionError = new FirestorePermissionError({
-            path: jobsColRef.path,
-            operation: 'create',
-            requestResourceData: jobData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
     }
   };
   
-  const handleDelete = (jobId: string) => {
+  const handleDelete = async (jobId: string) => {
       if (!firestore) return;
       const docRef = doc(firestore, 'sewingJobs', jobId);
-      deleteDoc(docRef).then(() => {
-          toast({ title: "Pekerjaan berhasil dihapus."})
-      }).catch(err => {
-          const permissionError = new FirestorePermissionError({ path: docRef.path, operation: 'delete' });
-          errorEmitter.emit('permission-error', permissionError);
-      })
+      try {
+        await deleteDoc(docRef);
+        toast({ title: "Pekerjaan berhasil dihapus."})
+      } catch (err) {
+        console.error(err);
+        toast({ 
+            variant: 'destructive',
+            title: 'Gagal menghapus',
+            description: 'Terjadi kesalahan saat menghapus data pekerjaan.'
+        })
+      }
   }
 
   return (
