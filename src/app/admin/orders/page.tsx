@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -23,15 +23,39 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 type Order = {
@@ -42,6 +66,8 @@ type Order = {
     orderDate: string;
     status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 }
+
+const statusOptions: Order['status'][] = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
 const statusVariantMap: Record<Order['status'], 'default' | 'secondary' | 'destructive'> = {
     Pending: 'default',
@@ -57,6 +83,13 @@ const getStatusVariant = (status: Order['status']) => {
 export default function PesananPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<WithId<Order> | null>(null);
+
+  // Form state
+  const [customerName, setCustomerName] = useState('');
+  const [status, setStatus] = useState<Order['status'] | ''>('');
+
 
   const ordersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -64,6 +97,17 @@ export default function PesananPage() {
   }, [firestore]);
 
   const { data: orders, isLoading } = useCollection<Order>(ordersQuery);
+
+  useEffect(() => {
+    if (editingOrder) {
+      setCustomerName(editingOrder.customerName);
+      setStatus(editingOrder.status);
+      setEditDialogOpen(true);
+    } else {
+      setCustomerName('');
+      setStatus('');
+    }
+  }, [editingOrder]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -82,27 +126,62 @@ export default function PesananPage() {
     });
   };
 
-  const updateOrderStatus = (orderId: string, status: Order['status']) => {
-    if(!firestore) return;
-    const orderDocRef = doc(firestore, 'orders', orderId);
-    const updatedData = { status };
+  const handleEditClick = (order: WithId<Order>) => {
+    setEditingOrder(order);
+  };
+
+  const handleEditFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firestore || !editingOrder) return;
+    
+    const orderDocRef = doc(firestore, 'orders', editingOrder.id);
+    const updatedData = {
+      customerName,
+      status,
+    };
     
     updateDoc(orderDocRef, updatedData).then(() => {
-        toast({
-            title: "Status Pesanan Diperbarui",
-            description: `Pesanan ${orderId} sekarang berstatus ${status}.`
-        })
+        toast({ title: 'Pesanan Berhasil Diperbarui' });
+        setEditDialogOpen(false);
+        setEditingOrder(null);
     }).catch(err => {
-         const permissionError = new FirestorePermissionError({
+        const permissionError = new FirestorePermissionError({
           path: orderDocRef.path,
           operation: 'update',
-          requestResourceData: updatedData,
+          requestResourceData: updatedData
         });
         errorEmitter.emit('permission-error', permissionError);
-    })
-  }
+    });
+  };
+
+  const handleDelete = async (order: WithId<Order>) => {
+    if (!firestore) return;
+    const orderDocRef = doc(firestore, 'orders', order.id);
+    deleteDoc(orderDocRef)
+      .then(() => {
+        toast({
+          title: 'Pesanan Berhasil Dihapus',
+          description: `Pesanan dari "${order.customerName}" telah dihapus.`,
+        });
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: orderDocRef.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setEditingOrder(null);
+    }
+    setEditDialogOpen(isOpen);
+  };
 
   return (
+    <>
     <div>
       <h1 className="text-2xl font-bold mb-4">Pesanan</h1>
       <Card>
@@ -150,18 +229,39 @@ export default function PesananPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Processing')}>
-                                    Proses Pesanan
+                                <DropdownMenuItem onClick={() => handleEditClick(order)} className='cursor-pointer'>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    <span>Edit Pesanan</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Shipped')}>
-                                    Kirim Pesanan
-                                </DropdownMenuItem>
-                                 <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Delivered')}>
-                                    Selesai
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Cancelled')} className="text-destructive">
-                                    Batalkan
-                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem
+                                            onSelect={(e) => e.preventDefault()}
+                                            className='text-destructive focus:text-destructive cursor-pointer'
+                                        >
+                                          <Trash2 className="mr-2 h-4 w-4" />
+                                          <span>Hapus Pesanan</span>
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Hapus Pesanan?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Apakah Anda yakin ingin menghapus pesanan dari "{order.customerName}"? Tindakan ini tidak dapat diurungkan.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Batal</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={() => handleDelete(order)}
+                                                className="bg-destructive hover:bg-destructive/80"
+                                            >
+                                                Hapus
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </TableCell>
@@ -179,5 +279,42 @@ export default function PesananPage() {
         </CardContent>
       </Card>
     </div>
+    
+    <Dialog open={isEditDialogOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+              <DialogTitle>Ubah Data Pesanan</DialogTitle>
+              <DialogDescription>
+                  Perbarui detail pesanan di bawah ini.
+              </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditFormSubmit} className="grid gap-4 py-4">
+              <div className="space-y-2">
+                  <Label htmlFor="customerName">Nama Pelanggan</Label>
+                  <Input id="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="status">Status Pesanan</Label>
+                  <Select value={status} onValueChange={(value) => setStatus(value as Order['status'])} required>
+                      <SelectTrigger id="status">
+                          <SelectValue placeholder="Pilih status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {statusOptions.map(s => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+              </div>
+              <DialogFooter>
+                  <DialogClose asChild>
+                      <Button type="button" variant="outline">Batal</Button>
+                  </DialogClose>
+                  <Button type="submit">Simpan Perubahan</Button>
+              </DialogFooter>
+          </form>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
