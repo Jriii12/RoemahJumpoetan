@@ -331,6 +331,24 @@
         "purpose": { "type": "string", "description": "The reason for the outbound transaction." }
       },
       "required": ["id", "productId", "productName", "quantity", "outboundDate", "purpose"]
+    },
+    "SewingJob": {
+      "title": "Sewing Job",
+      "type": "object",
+      "description": "Represents a job or task assigned to a tailor.",
+      "properties": {
+        "id": { "type": "string" },
+        "jobName": { "type": "string", "description": "A descriptive name for the job (e.g., Produksi Kemeja Batch #26)." },
+        "modelName": { "type": "string", "description": "The name of the clothing model." },
+        "modelImageUrl": { "type": "string", "format": "uri", "description": "URL of an image for the clothing model." },
+        "fabricType": { "type": "string", "description": "The type of fabric to be used." },
+        "clothingType": { "type": "string", "description": "The type of clothing (e.g., Kemeja, Gaun)." },
+        "quantity": { "type": "number", "description": "The number of items to be produced." },
+        "tailorName": { "type": "string", "description": "The name of the tailor assigned to the job." },
+        "dateGiven": { "type": "string", "format": "date", "description": "The date the job was given to the tailor." },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed"], "description": "The current status of the sewing job." }
+      },
+      "required": ["id", "jobName", "modelName", "modelImageUrl", "fabricType", "clothingType", "quantity", "status"]
     }
   },
   "auth": {
@@ -491,8 +509,19 @@
           "description": "Stores records of finished goods leaving the warehouse. Accessible by admin/warehouse staff.",
           "params": [{ "name": "outboundId", "description": "The unique ID of the outbound record." }]
         }
+      },
+      {
+        "path": "/sewingJobs/{jobId}",
+        "definition": {
+          "entityName": "SewingJob",
+          "schema": { "$ref": "#/backend/entities/SewingJob" },
+          "description": "Stores sewing job records for tailors. Accessible by admin/warehouse staff.",
+          "params": [{ "name": "jobId", "description": "The unique ID of the sewing job." }]
+        }
       }
     ],
     "reasoning": "The Firestore structure is designed to provide a secure and scalable data model for the Roemah Jumpoetan Palembang application, focusing on authorization independence and clear access patterns.  The design adheres to the principle of Authorization Independence by avoiding `get()` calls in security rules. All security rules will rely solely on `request.auth.uid` and data present within the document being accessed, ensuring atomic operations and simplifying debugging. Data is segregated based on its access requirements. Path-based ownership is used for user-specific data, and there are no global roles. The structure supports secure `list` operations by ensuring that all documents in a collection have the same security posture."
   }
 }
+
+    

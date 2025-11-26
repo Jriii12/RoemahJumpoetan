@@ -17,6 +17,7 @@
  * - /usedRawMaterials/{usageId}: Stores raw material usages. Writable by admins.
  * - /inboundFinishedGoods/{inboundId}: Stores records of finished goods entering the warehouse. Writable by admins.
  * - /outboundFinishedGoods/{outboundId}: Stores records of finished goods leaving the warehouse for non-sale purposes. Writable by admins.
+ * - /sewingJobs/{jobId}: Stores job records for tailors. Writable by admins.
  *
  * Key Security Decisions:
  * - User listing is disallowed for non-admins but allowed for admins.
@@ -143,5 +144,15 @@ service cloud.firestore {
     match /outboundFinishedGoods/{outboundId} {
         allow read, write: if isAdmin();
     }
+    
+    /**
+     * @description Admin-only access for tailor job records.
+     * @path /sewingJobs/{jobId}
+     */
+    match /sewingJobs/{jobId} {
+        allow read, write: if isAdmin();
+    }
   }
 }
+
+    
