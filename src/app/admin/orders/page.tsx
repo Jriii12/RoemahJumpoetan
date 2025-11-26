@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import {
@@ -46,7 +46,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Printer } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -56,7 +56,6 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { OrderReceipt } from './receipt';
 
 
 type Order = {
@@ -93,9 +92,6 @@ export default function PesananPage() {
   const { toast } = useToast();
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<WithId<Order> | null>(null);
-  const [receiptOrder, setReceiptOrder] = useState<WithId<Order> | null>(null);
-  const receiptRef = useRef<HTMLDivElement>(null);
-
 
   // Form state
   const [customerName, setCustomerName] = useState('');
@@ -191,13 +187,9 @@ export default function PesananPage() {
     setEditDialogOpen(isOpen);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <>
-    <div className="printable-area">
+    <div>
       <h1 className="text-2xl font-bold mb-4">Pesanan</h1>
       <Card>
         <CardHeader>
@@ -236,10 +228,6 @@ export default function PesananPage() {
                         <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => setReceiptOrder(order)}>
-                          <Printer className="h-4 w-4" />
-                          <span className="sr-only">Cetak Resi</span>
-                       </Button>
                        <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -333,22 +321,6 @@ export default function PesananPage() {
               </DialogFooter>
           </form>
       </DialogContent>
-    </Dialog>
-
-    <Dialog open={!!receiptOrder} onOpenChange={(open) => !open && setReceiptOrder(null)}>
-        <DialogContent className="sm:max-w-3xl print-content">
-            <DialogHeader>
-                <DialogTitle>Resi Pengiriman</DialogTitle>
-                <DialogDescription>
-                    Resi ini siap untuk dicetak dan ditempelkan pada paket.
-                </DialogDescription>
-            </DialogHeader>
-            {receiptOrder && <OrderReceipt order={receiptOrder} ref={receiptRef} />}
-            <DialogFooter className='non-printable'>
-                <Button variant="outline" onClick={() => setReceiptOrder(null)}>Kembali</Button>
-                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Cetak Resi</Button>
-            </DialogFooter>
-        </DialogContent>
     </Dialog>
     </>
   );

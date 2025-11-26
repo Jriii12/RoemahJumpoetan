@@ -71,7 +71,8 @@ service cloud.firestore {
      * @path /products/{productId}
      */
     match /products/{productId} {
-      allow get, list: if true;
+      allow get: if request.auth != null;
+      allow list: if request.auth != null;
       allow write: if isAdmin();
 
        /**
@@ -83,14 +84,6 @@ service cloud.firestore {
         allow read: if isAdmin();
         allow update, delete: if false; // Ratings are immutable for now
       }
-    }
-    
-    /**
-     * @description Collection group rule to allow admins to list all ratings across all products.
-     * @path /products/{productId}/ratings/{ratingId}
-     */
-    match /{path=**}/ratings/{ratingId} {
-      allow list: if isAdmin();
     }
 
     /**
