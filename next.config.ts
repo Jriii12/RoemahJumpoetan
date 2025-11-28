@@ -39,6 +39,12 @@ const nextConfig: NextConfig = {
         hostname: 'down-id.img.susercontent.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.qrserver.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
