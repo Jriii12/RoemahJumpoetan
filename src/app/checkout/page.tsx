@@ -19,6 +19,8 @@ import { useUser, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useState } from 'react';
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -26,6 +28,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
+  const [paymentMethod, setPaymentMethod] = useState('cod');
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -70,6 +73,7 @@ export default function CheckoutPage() {
         totalAmount: cartTotal,
         orderDate: new Date().toISOString(),
         status: 'Pending',
+        paymentMethod: paymentMethod,
     };
 
     const ordersColRef = collection(firestore, 'orders');
@@ -147,16 +151,34 @@ export default function CheckoutPage() {
             </Card>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Metode Pembayaran</CardTitle>
-                    <CardDescription>Saat ini kami hanya menerima Cash on Delivery (COD).</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="p-4 border rounded-md bg-muted/30">
-                        <p className="font-semibold">Bayar di Tempat (Cash on Delivery)</p>
-                        <p className="text-sm text-muted-foreground">Siapkan uang pas saat kurir tiba.</p>
+              <CardHeader>
+                <CardTitle>Metode Pembayaran</CardTitle>
+                <CardDescription>Pilih metode pembayaran Anda.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
+                  <Label htmlFor="cod" className="flex items-start gap-4 p-4 border rounded-md cursor-pointer has-[:checked]:border-primary">
+                    <RadioGroupItem value="cod" id="cod" className="mt-1"/>
+                    <div>
+                      <p className="font-semibold">Bayar di Tempat (Cash on Delivery)</p>
+                      <p className="text-sm text-muted-foreground">Siapkan uang pas saat kurir tiba.</p>
                     </div>
-                </CardContent>
+                  </Label>
+                  <Label htmlFor="qris" className="flex items-start gap-4 p-4 border rounded-md cursor-pointer has-[:checked]:border-primary">
+                     <RadioGroupItem value="qris" id="qris" className="mt-1"/>
+                    <div>
+                      <p className="font-semibold">QRIS</p>
+                      <p className="text-sm text-muted-foreground">Scan kode QR untuk membayar.</p>
+                       {paymentMethod === 'qris' && (
+                        <div className="mt-4 p-4 bg-muted/50 rounded-lg flex flex-col items-center">
+                          <Image src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://tokopedia.com/roemahjumpoetan" alt="QRIS Code" width={200} height={200} className="rounded-md" />
+                          <p className="text-xs text-center mt-2 text-muted-foreground">Scan kode QR di atas dengan aplikasi perbankan atau e-wallet Anda.</p>
+                        </div>
+                      )}
+                    </div>
+                  </Label>
+                </RadioGroup>
+              </CardContent>
             </Card>
           </div>
           <div className="lg:col-span-1">
