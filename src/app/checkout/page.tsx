@@ -102,6 +102,8 @@ export default function CheckoutPage() {
         errorEmitter.emit('permission-error', permissionError);
     })
   }
+  
+  const qrCodeData = encodeURIComponent(`PEMBAYARAN ROEMAH JUMPOETAN - TOTAL: ${formatPrice(cartTotal)}`);
 
   if (cartItems.length === 0) {
     return (
@@ -248,7 +250,7 @@ export default function CheckoutPage() {
           </DialogHeader>
           <div className="p-4 bg-muted/50 rounded-lg flex flex-col items-center">
             <Image 
-              src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://tokopedia.com/roemahjumpoetan" 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${qrCodeData}`} 
               alt="QRIS Code" 
               width={250} 
               height={250} 
