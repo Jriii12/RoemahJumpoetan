@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -25,17 +26,34 @@ import {
   ArrowDown,
   ArrowUp,
   BarChart,
+  Box,
   Calendar as CalendarIcon,
   DollarSign,
   Package,
+  ShoppingCart,
   TriangleAlert,
 } from 'lucide-react';
 import { AdminDonutChart } from '../components/charts';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit, where } from 'firebase/firestore';
+
+type Order = {
+  totalAmount: number;
+  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+};
+
+type InboundRecord = {
+  quantity: number;
+};
+
+type OutboundRecord = {
+  quantity: number;
+};
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -45,15 +63,21 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
+const formatNumber = (num: number) => {
+  return new Intl.NumberFormat('id-ID').format(num);
+}
+
 const MetricCard = ({
   title,
   value,
   icon: Icon,
+  isLoading,
   trend,
 }: {
   title: string;
   value: string;
   icon: React.ElementType;
+  isLoading?: boolean;
   trend?: { value: string; direction: 'up' | 'down' };
 }) => (
   <Card>
@@ -62,16 +86,25 @@ const MetricCard = ({
       <Icon className="h-4 w-4 text-muted-foreground" />
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-      {trend && (
-        <p className="text-xs text-muted-foreground flex items-center">
-          {trend.direction === 'up' ? (
-            <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
-          ) : (
-            <ArrowDown className="h-3 w-3 text-red-500 mr-1" />
-          )}
-          {trend.value} dari bulan lalu
-        </p>
+      {isLoading ? (
+        <>
+            <Skeleton className='h-8 w-3/4' />
+            <Skeleton className='h-4 w-1/2 mt-2' />
+        </>
+      ) : (
+        <>
+            <div className="text-2xl font-bold">{value}</div>
+            {trend && (
+                <p className="text-xs text-muted-foreground flex items-center">
+                {trend.direction === 'up' ? (
+                    <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
+                ) : (
+                    <ArrowDown className="h-3 w-3 text-red-500 mr-1" />
+                )}
+                {trend.value} dari bulan lalu
+                </p>
+            )}
+        </>
       )}
     </CardContent>
   </Card>
@@ -87,6 +120,47 @@ const StockStatusBadge = ({ status }: { status: 'tersedia' | 'hampir habis' | 'h
 }
 
 export default function AdminDashboardPage() {
+  const firestore = useFirestore();
+
+  // --- Data Fetching ---
+  const deliveredOrdersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'orders'), where('status', '==', 'Delivered'));
+  }, [firestore]);
+  const { data: deliveredOrders, isLoading: isLoadingSales } = useCollection<Order>(deliveredOrdersQuery);
+
+  const inboundQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'inboundFinishedGoods'));
+  }, [firestore]);
+  const { data: inboundRecords, isLoading: isLoadingInbound } = useCollection<InboundRecord>(inboundQuery);
+
+  const outboundQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'outboundFinishedGoods'));
+  }, [firestore]);
+  const { data: outboundRecords, isLoading: isLoadingOutbound } = useCollection<OutboundRecord>(outboundQuery);
+  
+  const lowStockQuery = useMemoFirebase(() => {
+    if(!firestore) return null;
+    return query(collection(firestore, 'products'), where('stock', '<', 10), limit(5));
+  }, [firestore]);
+  const { data: lowStockProducts, isLoading: isLoadingLowStock } = useCollection<{name: string, stock: number}>(lowStockQuery);
+
+
+  // --- Data Calculation ---
+  const totalSales = useMemo(() => {
+    return deliveredOrders?.reduce((sum, order) => sum + order.totalAmount, 0) || 0;
+  }, [deliveredOrders]);
+
+  const totalInboundItems = useMemo(() => {
+    return inboundRecords?.reduce((sum, record) => sum + record.quantity, 0) || 0;
+  }, [inboundRecords]);
+
+  const totalOutboundItems = useMemo(() => {
+    return outboundRecords?.reduce((sum, record) => sum + record.quantity, 0) || 0;
+  }, [outboundRecords]);
+
   const bestSellers = [
     { id: '1', name: 'Kain Jumputan Merah', purchases: 120 },
     { id: '2', name: 'Gaun Pesta Jumputan', purchases: 95 },
@@ -95,18 +169,14 @@ export default function AdminDashboardPage() {
     { id: '5', name: 'Blouse Wanita Modern', purchases: 65 },
   ];
   const isLoadingBestSellers = false;
-
-  const lowStockProducts = [
-      {id: '1', name: 'Kain Jumputan Biru', stock: 8},
-      {id: '2', name: 'Tas Pesta', stock: 5},
-  ];
-  const isLoadingLowStock = false;
   
   const getStockStatus = (stock: number): 'tersedia' | 'hampir habis' | 'habis' => {
     if (stock <= 0) return 'habis';
     if (stock < 10) return 'hampir habis';
     return 'tersedia';
   }
+
+  const isLoadingMetrics = isLoadingSales || isLoadingInbound || isLoadingOutbound;
 
 
   return (
@@ -115,7 +185,7 @@ export default function AdminDashboardPage() {
         <h1 className="text-2xl font-bold">Dasbor</h1>
         <Button variant="outline">
           <CalendarIcon className="mr-2 h-4 w-4" />
-          Rentang Waktu: Hari Ini
+          Rentang Waktu: Semua
         </Button>
       </div>
       
@@ -129,24 +199,30 @@ export default function AdminDashboardPage() {
         </Alert>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          title="Penjualan"
-          value={formatPrice(973000)}
+          title="Total Penjualan"
+          value={formatPrice(totalSales)}
           icon={DollarSign}
-          trend={{ value: '+12.5%', direction: 'up' }}
+          isLoading={isLoadingSales}
         />
         <MetricCard
-          title="Uang Masuk"
-          value={formatPrice(30973000)}
-          icon={ArrowDown}
-          trend={{ value: '+20.1%', direction: 'up' }}
+          title="Total Pesanan Selesai"
+          value={formatNumber(deliveredOrders?.length || 0)}
+          icon={ShoppingCart}
+          isLoading={isLoadingSales}
         />
         <MetricCard
-          title="Uang Keluar"
-          value={formatPrice(28088000)}
-          icon={ArrowUp}
-          trend={{ value: '-5.2%', direction: 'down' }}
+          title="Total Barang Masuk"
+          value={formatNumber(totalInboundItems)}
+          icon={Box}
+          isLoading={isLoadingInbound}
+        />
+        <MetricCard
+          title="Total Barang Keluar"
+          value={formatNumber(totalOutboundItems)}
+          icon={Package}
+          isLoading={isLoadingOutbound}
         />
       </div>
 
@@ -266,3 +342,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
