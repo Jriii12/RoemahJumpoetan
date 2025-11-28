@@ -1,8 +1,9 @@
+
 'use client';
 
 import React from 'react';
 import { useFirestore, WithId } from '@/firebase';
-import { collectionGroup, query, onSnapshot, collection, getDocs }from 'firebase/firestore';
+import { collectionGroup, query, onSnapshot, collection, getDocs, orderBy }from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -121,7 +122,6 @@ export default function RatingProdukPage() {
         }
       );
 
-      // Return the unsubscribe function to be called on component unmount
       return unsubscribe;
     };
     
@@ -186,25 +186,29 @@ export default function RatingProdukPage() {
                 <TableRow>
                     <TableHead className='w-[120px]'>Rating</TableHead>
                     <TableHead>Ulasan</TableHead>
+                    <TableHead>Produk</TableHead>
+                    <TableHead>Tanggal</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
                     Array.from({length: 5}).map((_, i) => (
                       <TableRow key={i}>
-                          <TableCell colSpan={2}><Skeleton className="h-12 w-full" /></TableCell>
+                          <TableCell colSpan={4}><Skeleton className="h-12 w-full" /></TableCell>
                       </TableRow>
                   ))
                 ) : allRatings.length > 0 ? (
                     allRatings.map((rating) => (
                     <TableRow key={rating.id} onClick={() => handleRowClick(rating)} className="cursor-pointer hover:bg-muted/50">
                         <TableCell>{renderStars(rating.rating)}</TableCell>
-                        <TableCell className='text-muted-foreground truncate max-w-lg'>{rating.comment || '-'}</TableCell>
+                        <TableCell className='text-muted-foreground truncate max-w-sm'>{rating.comment || '-'}</TableCell>
+                        <TableCell>{rating.productName || 'N/A'}</TableCell>
+                        <TableCell>{formatDate(rating.createdAt)}</TableCell>
                     </TableRow>
                     ))
                 ) : (
                   <TableRow>
-                      <TableCell colSpan={2} className="h-48 text-center text-muted-foreground">
+                      <TableCell colSpan={4} className="h-48 text-center text-muted-foreground">
                           Belum ada rating yang diberikan.
                       </TableCell>
                   </TableRow>
