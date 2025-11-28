@@ -67,14 +67,6 @@ type UsedMaterial = {
   usageDate: string;
 };
 
-// Initial data as requested by the user
-const initialPurchases: WithId<PurchasedMaterial>[] = [
-    { id: 'seed1', name: 'kain', quantity: '100 meter', storeName: 'toko cemerlang', purchaseDate: new Date().toISOString().split('T')[0] },
-    { id: 'seed2', name: 'pewarnaan zat sintesis', quantity: '5 kg', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
-    { id: 'seed3', name: 'gambir pewarnaan alam', quantity: '10 kg', storeName: 'babat toman', purchaseDate: new Date().toISOString().split('T')[0] },
-    { id: 'seed4', name: 'pelembut kain', quantity: '2 liter', storeName: 'toko fajar setia', purchaseDate: new Date().toISOString().split('T')[0] },
-];
-
 const formatDate = (dateString: string) => {
     if (!dateString) return '-';
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -111,7 +103,7 @@ export default function BarangMentahPage() {
     if (!firestore) return null;
     return query(collection(firestore, 'purchasedRawMaterials'), orderBy('purchaseDate', 'desc'));
   }, [firestore]);
-  const { data: fetchedPurchases, isLoading: isLoadingPurchases } = useCollection<PurchasedMaterial>(purchasesQuery);
+  const { data: purchasedMaterials, isLoading: isLoadingPurchases } = useCollection<PurchasedMaterial>(purchasesQuery);
 
   const usagesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -119,15 +111,6 @@ export default function BarangMentahPage() {
   }, [firestore]);
   const { data: usedMaterials, isLoading: isLoadingUsages } = useCollection<UsedMaterial>(usagesQuery);
   
-  const purchasedMaterials = useMemo(() => {
-    if (fetchedPurchases === null && isLoadingPurchases) {
-        return []; // Still loading
-    }
-    if (fetchedPurchases && fetchedPurchases.length > 0) {
-      return fetchedPurchases;
-    }
-    return initialPurchases;
-  }, [fetchedPurchases, isLoadingPurchases]);
 
   const { uniqueMaterialNames, materialToStoreMap } = useMemo(() => {
     if (!purchasedMaterials) return { uniqueMaterialNames: [], materialToStoreMap: new Map() };
@@ -265,9 +248,8 @@ export default function BarangMentahPage() {
   // Calculate final stock
   const finalStock = useMemo(() => {
     const stockMap = new Map<string, { purchased: number; used: number; unit: string }>();
-    const materials = (fetchedPurchases?.length ?? 0) > 0 ? fetchedPurchases : initialPurchases;
-
-    materials?.forEach(material => {
+    
+    purchasedMaterials?.forEach(material => {
       const { value, unit } = parseQuantity(material.quantity);
       if (!unit) return;
       const key = `${material.name.toLowerCase()}_${unit.toLowerCase()}`;
@@ -296,7 +278,7 @@ export default function BarangMentahPage() {
         }
     });
 
-  }, [fetchedPurchases, usedMaterials, initialPurchases]);
+  }, [purchasedMaterials, usedMaterials]);
 
   const isLoading = isLoadingPurchases || isLoadingUsages;
 
@@ -614,5 +596,3 @@ export default function BarangMentahPage() {
     </>
   );
 }
-
-    
