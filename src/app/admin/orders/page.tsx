@@ -124,8 +124,8 @@ export default function PesananPage() {
     
     updateDoc(orderDocRef, { status: newStatus }).then(() => {
         toast({ title: 'Status Pesanan Diperbarui' });
-        // Update local state to reflect the change immediately
-        setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+        // Close detail pane on successful update
+        setSelectedOrder(null);
     }).catch(err => {
         const permissionError = new FirestorePermissionError({
           path: orderDocRef.path,
@@ -327,5 +327,3 @@ export default function PesananPage() {
     </div>
   );
 }
-
-
