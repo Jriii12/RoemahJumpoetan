@@ -65,6 +65,7 @@ type Order = {
     totalAmount: number;
     orderDate: string;
     status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+    paymentMethod?: 'cod' | 'qris';
 }
 
 const statusOptions: Order['status'][] = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -157,6 +158,12 @@ export default function PesananPage() {
         errorEmitter.emit('permission-error', permissionError);
       });
   };
+
+  const getPaymentMethodName = (method?: string) => {
+    if (method === 'cod') return 'Bayar di Tempat (COD)';
+    if (method === 'qris') return 'QRIS';
+    return 'N/A';
+  }
 
   return (
     <div className="flex h-full">
@@ -302,6 +309,10 @@ export default function PesananPage() {
                     <div className="flex justify-between font-bold text-base">
                         <span>Total</span>
                         <span>{formatPrice(selectedOrder.totalAmount)}</span>
+                    </div>
+                     <div className="flex justify-between pt-2">
+                        <span className="text-muted-foreground">Metode Pembayaran</span>
+                        <span className='font-semibold'>{getPaymentMethodName(selectedOrder.paymentMethod)}</span>
                     </div>
                 </div>
 
