@@ -70,17 +70,22 @@ export default function CheckoutPage() {
         userId: user.uid,
         customerName: `${customerDetails.firstName} ${customerDetails.lastName}`,
         customerDetails,
-        products: cartItems.map(item => ({
-            id: item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            quantity: item.quantity,
-            imageUrl: item.product.imageUrl,
-            size: item.size
-        })),
+        products: cartItems.map(item => {
+            const productData: any = {
+                id: item.product.id,
+                name: item.product.name,
+                price: item.product.price,
+                quantity: item.quantity,
+                imageUrl: item.product.imageUrl,
+            };
+            if (item.size) {
+                productData.size = item.size;
+            }
+            return productData;
+        }),
         totalAmount: cartTotal,
         orderDate: new Date().toISOString(),
-        status: 'Pending',
+        status: 'Pending' as 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled',
         paymentMethod: paymentMethod,
     };
 
