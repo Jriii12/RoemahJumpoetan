@@ -17,7 +17,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription
+  CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   DropdownMenu,
@@ -326,4 +327,5 @@ export default function PesananPage() {
     </div>
   );
 }
+
 
