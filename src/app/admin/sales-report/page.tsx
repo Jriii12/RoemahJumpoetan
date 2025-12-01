@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -36,6 +36,7 @@ type Order = {
     orderDate: string;
     customerName: string;
     products: { name: string; quantity: number; price: number; }[];
+    status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 };
 
 const formatPrice = (price: number) => {
@@ -60,10 +61,10 @@ export default function SalesReportPage() {
     const printComponentRef = useRef<HTMLDivElement>(null);
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
-    const deliveredOrdersQuery = useMemoFirebase(() => {
+    const ordersQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
-        const constraints = [where('status', '==', 'Delivered')];
+        const constraints = [orderBy('orderDate', 'desc')];
         if (dateRange?.from) {
              constraints.push(where('orderDate', '>=', dateRange.from.toISOString()));
         }
@@ -73,16 +74,16 @@ export default function SalesReportPage() {
             constraints.push(where('orderDate', '<=', toDate.toISOString()));
         }
         
-        // Removed orderBy from the query to avoid needing a composite index.
         return query(collection(firestore, 'orders'), ...constraints);
     }, [firestore, dateRange]);
 
-    const { data: deliveredOrders, isLoading } = useCollection<Order>(deliveredOrdersQuery);
+    const { data: allOrders, isLoading } = useCollection<Order>(ordersQuery);
     
-    const sortedOrders = useMemo(() => {
-        if (!deliveredOrders) return [];
-        return [...deliveredOrders].sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-    }, [deliveredOrders]);
+    // Filter for delivered orders on the client-side
+    const deliveredOrders = useMemo(() => {
+        if (!allOrders) return [];
+        return allOrders.filter(order => order.status === 'Delivered');
+    }, [allOrders]);
 
 
     const totalRevenue = useMemo(() => {
@@ -170,8 +171,8 @@ export default function SalesReportPage() {
                                         <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
                                     </TableRow>
                                 ))
-                            ) : sortedOrders && sortedOrders.length > 0 ? (
-                                sortedOrders.map((order) => (
+                            ) : deliveredOrders && deliveredOrders.length > 0 ? (
+                                deliveredOrders.map((order) => (
                                     <TableRow key={order.id}>
                                         <TableCell className="font-mono text-xs">{order.id.substring(0, 7)}</TableCell>
                                         <TableCell>{formatDate(order.orderDate)}</TableCell>
@@ -198,7 +199,7 @@ export default function SalesReportPage() {
             </Card>
 
             <div style={{ display: 'none' }}>
-                <SalesReportPrint ref={printComponentRef} orders={sortedOrders || []} totalRevenue={totalRevenue} dateRange={dateRange}/>
+                <SalesReportPrint ref={printComponentRef} orders={deliveredOrders || []} totalRevenue={totalRevenue} dateRange={dateRange}/>
             </div>
         </div>
     );
