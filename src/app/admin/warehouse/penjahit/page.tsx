@@ -80,15 +80,14 @@ type SewingJob = {
   clothingType: string;
   startDate: string;
   dueDate: string;
-  jobStatus: 'Diterima' | 'Pengerjaan' | 'Selesai';
+  jobStatus: 'Sudah Dikirim ke Penjahit' | 'Telah Selesai';
 };
 
-const jobStatusOptions: SewingJob['jobStatus'][] = ['Diterima', 'Pengerjaan', 'Selesai'];
+const jobStatusOptions: SewingJob['jobStatus'][] = ['Sudah Dikirim ke Penjahit', 'Telah Selesai'];
 
 const statusVariantMap: Record<SewingJob['jobStatus'], 'default' | 'secondary' | 'destructive'> = {
-  Diterima: 'default',
-  Pengerjaan: 'secondary',
-  Selesai: 'secondary',
+  'Sudah Dikirim ke Penjahit': 'secondary',
+  'Telah Selesai': 'secondary',
 };
 
 const getStatusVariant = (status: SewingJob['jobStatus']) => {
@@ -120,7 +119,7 @@ export default function PenjahitPage() {
   const [clothingType, setClothingType] = useState('');
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [jobStatus, setJobStatus] = useState<SewingJob['jobStatus']>('Diterima');
+  const [jobStatus, setJobStatus] = useState<SewingJob['jobStatus']>('Sudah Dikirim ke Penjahit');
 
   const sewingJobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -138,7 +137,7 @@ export default function PenjahitPage() {
     setClothingType('');
     setStartDate('');
     setDueDate('');
-    setJobStatus('Diterima');
+    setJobStatus('Sudah Dikirim ke Penjahit');
     setEditingJob(null);
   };
 
@@ -452,3 +451,5 @@ export default function PenjahitPage() {
     </>
   );
 }
+
+    
