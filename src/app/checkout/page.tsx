@@ -17,6 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
@@ -29,6 +31,25 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useState } from 'react';
 
+// Define a type for the order data to use it in multiple places
+type OrderData = {
+    userId: string;
+    customerName: string;
+    customerDetails: {
+        firstName: string;
+        lastName: string;
+        address: string;
+        city: string;
+        postalCode: string;
+    };
+    products: any[];
+    totalAmount: number;
+    orderDate: string;
+    status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+    paymentMethod: string;
+}
+
+
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { toast } = useToast();
@@ -37,6 +58,7 @@ export default function CheckoutPage() {
   const firestore = useFirestore();
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [isQrDialogOpen, setQrDialogOpen] = useState(false);
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -46,6 +68,27 @@ export default function CheckoutPage() {
     }).format(price);
   };
   
+  const submitOrderToFirestore = async (data: OrderData) => {
+     if (!firestore) return;
+     const ordersColRef = collection(firestore, 'orders');
+
+    addDoc(ordersColRef, data).then(() => {
+        toast({
+            title: 'Pesanan Berhasil!',
+            description: 'Terima kasih telah berbelanja. Kami akan segera memproses pesanan Anda.',
+        });
+        clearCart();
+        router.push('/products');
+    }).catch(err => {
+         const permissionError = new FirestorePermissionError({
+          path: ordersColRef.path,
+          operation: 'create',
+          requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    })
+  }
+
   const handlePlaceOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user || !firestore || cartItems.length === 0) {
@@ -66,7 +109,7 @@ export default function CheckoutPage() {
         postalCode: formData.get('postalCode') as string,
     }
 
-    const orderData = {
+    const currentOrderData: OrderData = {
         userId: user.uid,
         customerName: `${customerDetails.firstName} ${customerDetails.lastName}`,
         customerDetails,
@@ -88,26 +131,24 @@ export default function CheckoutPage() {
         status: 'Pending' as 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled',
         paymentMethod: paymentMethod,
     };
+    
+    setOrderData(currentOrderData);
 
-    const ordersColRef = collection(firestore, 'orders');
-
-    addDoc(ordersColRef, orderData).then(() => {
-        toast({
-            title: 'Pesanan Berhasil!',
-            description: 'Terima kasih telah berbelanja. Kami akan segera memproses pesanan Anda.',
-        });
-        clearCart();
-        router.push('/products');
-    }).catch(err => {
-         const permissionError = new FirestorePermissionError({
-          path: ordersColRef.path,
-          operation: 'create',
-          requestResourceData: orderData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    })
+    if (paymentMethod === 'qris') {
+      setQrDialogOpen(true);
+    } else {
+      // For COD or other direct methods, submit immediately
+      await submitOrderToFirestore(currentOrderData);
+    }
   }
   
+  const handleConfirmQrPayment = async () => {
+    if (orderData) {
+      await submitOrderToFirestore(orderData);
+    }
+    setQrDialogOpen(false);
+  }
+
   const qrCodeData = encodeURIComponent(`PEMBAYARAN ROEMAH JUMPOETAN - TOTAL: ${formatPrice(cartTotal)}`);
 
   if (cartItems.length === 0) {
@@ -185,11 +226,6 @@ export default function CheckoutPage() {
                       <div>
                         <p className="font-semibold">QRIS</p>
                         <p className="text-sm text-muted-foreground">Scan kode QR untuk membayar melalui e-wallet atau m-banking.</p>
-                        {paymentMethod === 'qris' && (
-                          <Button type="button" size="sm" className="mt-3" onClick={() => setQrDialogOpen(true)}>
-                            Tampilkan Kode QR
-                          </Button>
-                        )}
                       </div>
                     </Label>
                   </RadioGroup>
@@ -263,6 +299,11 @@ export default function CheckoutPage() {
             />
           </div>
           <p className="text-xs text-center text-muted-foreground">Total: <span className="font-bold">{formatPrice(cartTotal)}</span></p>
+          <DialogFooter>
+            <Button type="button" className='w-full' onClick={handleConfirmQrPayment}>
+              Saya Sudah Bayar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
