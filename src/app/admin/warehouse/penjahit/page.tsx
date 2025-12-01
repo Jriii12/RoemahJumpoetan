@@ -59,16 +59,40 @@ import { Skeleton } from '@/components/ui/skeleton';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 
 
 type SewingJob = {
   jobName: string;
   tailorName: string;
+  tailorAddress: string;
   clothingModel: string;
   fabricType: string;
   clothingType: string;
   startDate: string;
   dueDate: string;
+  jobStatus: 'Diterima' | 'Pengerjaan' | 'Selesai';
+};
+
+const jobStatusOptions: SewingJob['jobStatus'][] = ['Diterima', 'Pengerjaan', 'Selesai'];
+
+const statusVariantMap: Record<SewingJob['jobStatus'], 'default' | 'secondary' | 'destructive'> = {
+  Diterima: 'default',
+  Pengerjaan: 'secondary',
+  Selesai: 'secondary',
+};
+
+const getStatusVariant = (status: SewingJob['jobStatus']) => {
+  return statusVariantMap[status] || 'default';
 };
 
 const formatDate = (dateString: string) => {
@@ -90,11 +114,13 @@ export default function PenjahitPage() {
   // Form state
   const [jobName, setJobName] = useState('');
   const [tailorName, setTailorName] = useState('');
+  const [tailorAddress, setTailorAddress] = useState('');
   const [clothingModel, setClothingModel] = useState('');
   const [fabricType, setFabricType] = useState('');
   const [clothingType, setClothingType] = useState('');
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [jobStatus, setJobStatus] = useState<SewingJob['jobStatus']>('Diterima');
 
   const sewingJobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -106,11 +132,13 @@ export default function PenjahitPage() {
   const resetForm = () => {
     setJobName('');
     setTailorName('');
+    setTailorAddress('');
     setClothingModel('');
     setFabricType('');
     setClothingType('');
     setStartDate('');
     setDueDate('');
+    setJobStatus('Diterima');
     setEditingJob(null);
   };
 
@@ -119,11 +147,13 @@ export default function PenjahitPage() {
       if (editingJob) {
         setJobName(editingJob.jobName);
         setTailorName(editingJob.tailorName);
+        setTailorAddress(editingJob.tailorAddress);
         setClothingModel(editingJob.clothingModel);
         setFabricType(editingJob.fabricType);
         setClothingType(editingJob.clothingType);
         setStartDate(editingJob.startDate);
         setDueDate(editingJob.dueDate);
+        setJobStatus(editingJob.jobStatus);
       } else {
         resetForm();
       }
@@ -149,11 +179,13 @@ export default function PenjahitPage() {
     const jobData = {
       jobName,
       tailorName,
+      tailorAddress,
       clothingModel,
       fabricType,
       clothingType,
       startDate,
       dueDate,
+      jobStatus,
     };
     
     try {
@@ -201,18 +233,20 @@ export default function PenjahitPage() {
     doc.setFontSize(11);
     doc.text(`Tanggal Cetak: ${format(new Date(), "d LLL yyyy", { locale: id })}`, 14, 28);
     
-    const tableColumn = ["Nama Pekerjaan", "Nama Penjahit", "Model Baju", "Jenis Kain", "Jenis Baju", "Tgl. Diserahkan", "Tgl. Selesai"];
+    const tableColumn = ["Nama Pekerjaan", "Penjahit", "Alamat", "Model Baju", "Jenis Kain", "Jenis Baju", "Tgl. Diserahkan", "Tgl. Selesai", "Status"];
     const tableRows: string[][] = [];
 
     sewingJobs.forEach(job => {
         const jobData = [
             job.jobName,
             job.tailorName,
+            job.tailorAddress,
             job.clothingModel,
             job.fabricType,
             job.clothingType,
             formatDate(job.startDate),
-            formatDate(job.dueDate)
+            formatDate(job.dueDate),
+            job.jobStatus,
         ];
         tableRows.push(jobData);
     });
@@ -248,88 +282,96 @@ export default function PenjahitPage() {
             <CardTitle>Daftar Pekerjaan Jahit</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama Pekerjaan</TableHead>
-                  <TableHead>Nama Penjahit</TableHead>
-                  <TableHead>Model Baju</TableHead>
-                  <TableHead>Jenis Kain</TableHead>
-                  <TableHead>Jenis Baju</TableHead>
-                  <TableHead>Tgl. Diserahkan</TableHead>
-                  <TableHead>Tgl. Selesai</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={8}>
-                        <Skeleton className="h-8 w-full" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : sewingJobs && sewingJobs.length > 0 ? (
-                  sewingJobs.map((job) => (
-                    <TableRow key={job.id}>
-                      <TableCell className="font-medium">{job.jobName}</TableCell>
-                      <TableCell>{job.tailorName}</TableCell>
-                      <TableCell>{job.clothingModel}</TableCell>
-                      <TableCell>{job.fabricType}</TableCell>
-                      <TableCell>{job.clothingType}</TableCell>
-                      <TableCell>{formatDate(job.startDate)}</TableCell>
-                      <TableCell>{formatDate(job.dueDate)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEditClick(job)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Hapus Pekerjaan?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Apakah Anda yakin ingin menghapus pekerjaan ini?
-                                Tindakan ini tidak dapat diurungkan.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteJob(job.id)}
-                                className="bg-destructive hover:bg-destructive/80"
-                              >
-                                Hapus
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
+            <div className="overflow-x-auto">
+              <Table className="min-w-full">
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
-                      Belum ada pekerjaan yang ditambahkan.
-                    </TableCell>
+                    <TableHead>Nama Pekerjaan</TableHead>
+                    <TableHead>Nama Penjahit</TableHead>
+                    <TableHead>Alamat</TableHead>
+                    <TableHead>Model Baju</TableHead>
+                    <TableHead>Jenis Kain</TableHead>
+                    <TableHead>Jenis Baju</TableHead>
+                    <TableHead>Tgl. Diserahkan</TableHead>
+                    <TableHead>Tgl. Selesai</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell colSpan={10}>
+                          <Skeleton className="h-8 w-full" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : sewingJobs && sewingJobs.length > 0 ? (
+                    sewingJobs.map((job) => (
+                      <TableRow key={job.id}>
+                        <TableCell className="font-medium">{job.jobName}</TableCell>
+                        <TableCell>{job.tailorName}</TableCell>
+                        <TableCell>{job.tailorAddress}</TableCell>
+                        <TableCell>{job.clothingModel}</TableCell>
+                        <TableCell>{job.fabricType}</TableCell>
+                        <TableCell>{job.clothingType}</TableCell>
+                        <TableCell>{formatDate(job.startDate)}</TableCell>
+                        <TableCell>{formatDate(job.dueDate)}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(job.jobStatus)}>{job.jobStatus}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEditClick(job)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Hapus Pekerjaan?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Apakah Anda yakin ingin menghapus pekerjaan ini?
+                                  Tindakan ini tidak dapat diurungkan.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteJob(job.id)}
+                                  className="bg-destructive hover:bg-destructive/80"
+                                >
+                                  Hapus
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={10} className="h-24 text-center">
+                        Belum ada pekerjaan yang ditambahkan.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -349,21 +391,42 @@ export default function PenjahitPage() {
               <Label htmlFor="jobName">Nama Pekerjaan</Label>
               <Input id="jobName" value={jobName} onChange={(e) => setJobName(e.target.value)} placeholder="Contoh: Kemeja Batik Batch 1" required />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="tailorName">Nama Penjahit</Label>
-              <Input id="tailorName" value={tailorName} onChange={(e) => setTailorName(e.target.value)} placeholder="Contoh: Budi Santoso" required />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tailorName">Nama Penjahit</Label>
+                <Input id="tailorName" value={tailorName} onChange={(e) => setTailorName(e.target.value)} placeholder="Contoh: Budi Santoso" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="jobStatus">Status Pekerjaan</Label>
+                <Select value={jobStatus} onValueChange={(value) => setJobStatus(value as SewingJob['jobStatus'])} required>
+                  <SelectTrigger id="jobStatus">
+                    <SelectValue placeholder="Pilih status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jobStatusOptions.map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="clothingModel">Model Baju</Label>
-              <Input id="clothingModel" value={clothingModel} onChange={(e) => setClothingModel(e.target.value)} placeholder="Contoh: Kemeja Lengan Panjang" required />
+              <Label htmlFor="tailorAddress">Alamat Penjahit</Label>
+              <Textarea id="tailorAddress" value={tailorAddress} onChange={(e) => setTailorAddress(e.target.value)} placeholder="Masukkan alamat lengkap penjahit" required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="clothingModel">Model Baju</Label>
+                <Input id="clothingModel" value={clothingModel} onChange={(e) => setClothingModel(e.target.value)} placeholder="Contoh: Kemeja Lengan Panjang" required />
+              </div>
+               <div className="space-y-2">
+                <Label htmlFor="clothingType">Jenis Baju</Label>
+                <Input id="clothingType" value={clothingType} onChange={(e) => setClothingType(e.target.value)} placeholder="Contoh: Kemeja" required />
+              </div>
             </div>
              <div className="space-y-2">
               <Label htmlFor="fabricType">Jenis Kain</Label>
               <Input id="fabricType" value={fabricType} onChange={(e) => setFabricType(e.target.value)} placeholder="Contoh: Katun Primisima" required />
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="clothingType">Jenis Baju</Label>
-              <Input id="clothingType" value={clothingType} onChange={(e) => setClothingType(e.target.value)} placeholder="Contoh: Kemeja" required />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

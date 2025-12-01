@@ -339,14 +339,16 @@
       "properties": {
         "id": { "type": "string", "description": "Unique identifier for the sewing job." },
         "tailorName": { "type": "string", "description": "Name of the tailor assigned to the job." },
+        "tailorAddress": { "type": "string", "description": "Address of the tailor." },
         "jobName": { "type": "string", "description": "Name or title of the sewing job." },
         "clothingModel": { "type": "string", "description": "The model of the clothing to be sewn." },
         "fabricType": { "type": "string", "description": "The type of fabric to be used." },
         "clothingType": { "type": "string", "description": "The type of clothing (e.g., Shirt, Dress)." },
         "startDate": { "type": "string", "format": "date", "description": "The date the job was handed over to the tailor." },
-        "dueDate": { "type": "string", "format": "date", "description": "The date the job is expected to be completed." }
+        "dueDate": { "type": "string", "format": "date", "description": "The date the job is expected to be completed." },
+        "jobStatus": { "type": "string", "description": "The current status of the sewing job.", "enum": ["Diterima", "Pengerjaan", "Selesai"] }
       },
-      "required": ["id", "tailorName", "jobName", "clothingModel", "fabricType", "clothingType", "startDate", "dueDate"]
+      "required": ["id", "tailorName", "tailorAddress", "jobName", "clothingModel", "fabricType", "clothingType", "startDate", "dueDate", "jobStatus"]
     }
   },
   "auth": {
