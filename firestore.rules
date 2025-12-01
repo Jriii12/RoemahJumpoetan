@@ -56,7 +56,7 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       // User can update their profile, but not their role.
-      allow update: if isOwner(userId);
+      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
     }
     
     /**
