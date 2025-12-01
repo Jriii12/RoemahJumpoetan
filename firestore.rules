@@ -10,10 +10,10 @@ service cloud.firestore {
 
     // --- USER DATA ---
     match /users/{userId} {
-      // Users can read and write their own data.
-      allow read, write: if isOwner(userId);
-      // Admins can list all users.
-      allow list: if request.auth != null; 
+      // Users can read their own data.
+      allow read: if isOwner(userId);
+      // Admins (any authenticated user) can list, create, update, and delete any user's data.
+      allow list, write: if request.auth != null;
     }
 
     match /users/{userId}/addresses/{addressId} {
@@ -27,11 +27,14 @@ service cloud.firestore {
     // --- PUBLIC DATA ---
     match /products/{productId} {
       allow get, list: if true;
+      // Allow any authenticated user to create/update products (for admin)
       allow write: if request.auth != null;
     }
 
     match /products/{productId}/ratings/{ratingId} {
+      // Any authenticated user can create their own rating
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // Anyone can read ratings
       allow read, list: if true;
     }
 
@@ -41,8 +44,7 @@ service cloud.firestore {
     }
 
     // --- ADMIN & AUTHENTICATED USER DATA ---
-    // Allow any authenticated user full access to these collections.
-    // This simplifies admin access without complex role checks for now.
+    // Allow any authenticated user full access to these collections for admin purposes.
     match /orders/{orderId} {
       allow read, write, list: if request.auth != null;
     }
