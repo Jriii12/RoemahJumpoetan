@@ -31,7 +31,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Printer, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -56,6 +56,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import jsPDF from 'jspdf';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
+
 
 type SewingJob = {
   jobName: string;
@@ -182,15 +186,55 @@ export default function PenjahitPage() {
     }
   };
 
+  const generatePdf = async () => {
+    if (!sewingJobs) return;
+    const { default: autoTable } = await import('jspdf-autotable');
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text('Laporan Pekerjaan Penjahit', 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Tanggal Cetak: ${format(new Date(), "d LLL yyyy", { locale: id })}`, 14, 28);
+    
+    const tableColumn = ["Nama Pekerjaan", "Model Baju", "Jenis Kain", "Jenis Baju", "Tgl. Diserahkan", "Tgl. Selesai"];
+    const tableRows: string[][] = [];
+
+    sewingJobs.forEach(job => {
+        const jobData = [
+            job.jobName,
+            job.clothingModel,
+            job.fabricType,
+            job.clothingType,
+            formatDate(job.startDate),
+            formatDate(job.dueDate)
+        ];
+        tableRows.push(jobData);
+    });
+
+    autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 35,
+    });
+
+    doc.save('laporan-penjahit.pdf');
+  };
+
   return (
     <>
       <div className="space-y-8">
         <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Manajemen Penjahit</h1>
-            <Button onClick={handleAddNewClick}>
-                <Plus className="mr-2 h-4 w-4" />
-                Tambah Pekerjaan
-            </Button>
+            <div className="flex gap-2">
+                 <Button onClick={generatePdf} variant="outline" disabled={!sewingJobs || sewingJobs.length === 0}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Cetak Laporan
+                </Button>
+                <Button onClick={handleAddNewClick}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tambah Pekerjaan
+                </Button>
+            </div>
         </div>
 
         <Card>
@@ -333,5 +377,3 @@ export default function PenjahitPage() {
     </>
   );
 }
-
-    
