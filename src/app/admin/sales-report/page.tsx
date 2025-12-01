@@ -73,10 +73,18 @@ export default function SalesReportPage() {
             constraints.push(where('orderDate', '<=', toDate.toISOString()));
         }
         
-        return query(collection(firestore, 'orders'), ...constraints, orderBy('orderDate', 'desc'));
+        // REMOVED: orderBy('orderDate', 'desc') to prevent composite index error
+        return query(collection(firestore, 'orders'), ...constraints);
     }, [firestore, dateRange]);
 
     const { data: deliveredOrders, isLoading } = useCollection<Order>(deliveredOrdersQuery);
+    
+    const sortedOrders = useMemo(() => {
+        if (!deliveredOrders) return [];
+        // Sort on the client-side
+        return [...deliveredOrders].sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+    }, [deliveredOrders]);
+
 
     const totalRevenue = useMemo(() => {
         return deliveredOrders?.reduce((sum, order) => sum + order.totalAmount, 0) || 0;
@@ -163,8 +171,8 @@ export default function SalesReportPage() {
                                         <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
                                     </TableRow>
                                 ))
-                            ) : deliveredOrders && deliveredOrders.length > 0 ? (
-                                deliveredOrders.map((order) => (
+                            ) : sortedOrders && sortedOrders.length > 0 ? (
+                                sortedOrders.map((order) => (
                                     <TableRow key={order.id}>
                                         <TableCell className="font-mono text-xs">{order.id.substring(0, 7)}</TableCell>
                                         <TableCell>{formatDate(order.orderDate)}</TableCell>
@@ -191,7 +199,7 @@ export default function SalesReportPage() {
             </Card>
 
             <div style={{ display: 'none' }}>
-                <SalesReportPrint ref={printComponentRef} orders={deliveredOrders || []} totalRevenue={totalRevenue} dateRange={dateRange}/>
+                <SalesReportPrint ref={printComponentRef} orders={sortedOrders || []} totalRevenue={totalRevenue} dateRange={dateRange}/>
             </div>
         </div>
     );
