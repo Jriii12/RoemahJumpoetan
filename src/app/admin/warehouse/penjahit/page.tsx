@@ -63,6 +63,7 @@ import { id } from 'date-fns/locale';
 
 type SewingJob = {
   jobName: string;
+  tailorName: string;
   clothingModel: string;
   fabricType: string;
   clothingType: string;
@@ -88,6 +89,7 @@ export default function PenjahitPage() {
 
   // Form state
   const [jobName, setJobName] = useState('');
+  const [tailorName, setTailorName] = useState('');
   const [clothingModel, setClothingModel] = useState('');
   const [fabricType, setFabricType] = useState('');
   const [clothingType, setClothingType] = useState('');
@@ -103,6 +105,7 @@ export default function PenjahitPage() {
   
   const resetForm = () => {
     setJobName('');
+    setTailorName('');
     setClothingModel('');
     setFabricType('');
     setClothingType('');
@@ -115,6 +118,7 @@ export default function PenjahitPage() {
     if (isDialogOpen) {
       if (editingJob) {
         setJobName(editingJob.jobName);
+        setTailorName(editingJob.tailorName);
         setClothingModel(editingJob.clothingModel);
         setFabricType(editingJob.fabricType);
         setClothingType(editingJob.clothingType);
@@ -144,6 +148,7 @@ export default function PenjahitPage() {
 
     const jobData = {
       jobName,
+      tailorName,
       clothingModel,
       fabricType,
       clothingType,
@@ -196,12 +201,13 @@ export default function PenjahitPage() {
     doc.setFontSize(11);
     doc.text(`Tanggal Cetak: ${format(new Date(), "d LLL yyyy", { locale: id })}`, 14, 28);
     
-    const tableColumn = ["Nama Pekerjaan", "Model Baju", "Jenis Kain", "Jenis Baju", "Tgl. Diserahkan", "Tgl. Selesai"];
+    const tableColumn = ["Nama Pekerjaan", "Nama Penjahit", "Model Baju", "Jenis Kain", "Jenis Baju", "Tgl. Diserahkan", "Tgl. Selesai"];
     const tableRows: string[][] = [];
 
     sewingJobs.forEach(job => {
         const jobData = [
             job.jobName,
+            job.tailorName,
             job.clothingModel,
             job.fabricType,
             job.clothingType,
@@ -246,6 +252,7 @@ export default function PenjahitPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama Pekerjaan</TableHead>
+                  <TableHead>Nama Penjahit</TableHead>
                   <TableHead>Model Baju</TableHead>
                   <TableHead>Jenis Kain</TableHead>
                   <TableHead>Jenis Baju</TableHead>
@@ -258,7 +265,7 @@ export default function PenjahitPage() {
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={7}>
+                      <TableCell colSpan={8}>
                         <Skeleton className="h-8 w-full" />
                       </TableCell>
                     </TableRow>
@@ -267,6 +274,7 @@ export default function PenjahitPage() {
                   sewingJobs.map((job) => (
                     <TableRow key={job.id}>
                       <TableCell className="font-medium">{job.jobName}</TableCell>
+                      <TableCell>{job.tailorName}</TableCell>
                       <TableCell>{job.clothingModel}</TableCell>
                       <TableCell>{job.fabricType}</TableCell>
                       <TableCell>{job.clothingType}</TableCell>
@@ -315,7 +323,7 @@ export default function PenjahitPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       Belum ada pekerjaan yang ditambahkan.
                     </TableCell>
                   </TableRow>
@@ -340,6 +348,10 @@ export default function PenjahitPage() {
             <div className="space-y-2">
               <Label htmlFor="jobName">Nama Pekerjaan</Label>
               <Input id="jobName" value={jobName} onChange={(e) => setJobName(e.target.value)} placeholder="Contoh: Kemeja Batik Batch 1" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tailorName">Nama Penjahit</Label>
+              <Input id="tailorName" value={tailorName} onChange={(e) => setTailorName(e.target.value)} placeholder="Contoh: Budi Santoso" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="clothingModel">Model Baju</Label>
