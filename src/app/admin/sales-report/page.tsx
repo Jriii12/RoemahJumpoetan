@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import {
   Table,
   TableBody,
@@ -22,12 +24,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Printer, Calendar as CalendarIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useReactToPrint } from 'react-to-print';
 import { SalesReportPrint } from './report';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
-import { format } from 'date-fns';
+import { format, format as formatDateFns } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -58,31 +59,33 @@ const formatDate = (dateString: string) => {
 
 export default function SalesReportPage() {
     const firestore = useFirestore();
-    const printComponentRef = useRef<HTMLDivElement>(null);
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
     const ordersQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
+        const q = collection(firestore, 'orders');
         const constraints = [orderBy('orderDate', 'desc')];
+        
         if (dateRange?.from) {
-             constraints.push(where('orderDate', '>=', dateRange.from.toISOString()));
+             constraints.unshift(where('orderDate', '>=', dateRange.from.toISOString()));
         }
         if (dateRange?.to) {
             const toDate = new Date(dateRange.to);
-            toDate.setHours(23, 59, 59, 999); // Include the whole day
-            constraints.push(where('orderDate', '<=', toDate.toISOString()));
+            toDate.setHours(23, 59, 59, 999);
+            constraints.unshift(where('orderDate', '<=', toDate.toISOString()));
         }
         
-        return query(collection(firestore, 'orders'), ...constraints);
+        return query(q, ...constraints);
     }, [firestore, dateRange]);
 
     const { data: allOrders, isLoading } = useCollection<Order>(ordersQuery);
     
-    // Filter for delivered orders on the client-side
     const deliveredOrders = useMemo(() => {
         if (!allOrders) return [];
-        return allOrders.filter(order => order.status === 'Delivered');
+        const filtered = allOrders.filter(order => order.status === 'Delivered');
+        // Sort client-side because orderBy might conflict with `where` on a different field without a composite index.
+        return filtered.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
     }, [allOrders]);
 
 
@@ -90,10 +93,56 @@ export default function SalesReportPage() {
         return deliveredOrders?.reduce((sum, order) => sum + order.totalAmount, 0) || 0;
     }, [deliveredOrders]);
 
-    const handlePrint = useReactToPrint({
-        content: () => printComponentRef.current,
-        documentTitle: `laporan-penjualan-${new Date().toISOString().split('T')[0]}`,
-    });
+    const getFormattedDateRange = () => {
+        if (!dateRange || !dateRange.from) return 'Semua Waktu';
+        if (dateRange.to) {
+            return `${format(dateRange.from, "d LLL yyyy", { locale: id })} - ${format(dateRange.to, "d LLL yyyy", { locale: id })}`;
+        }
+        return `Mulai dari ${format(dateRange.from, "d LLL yyyy", { locale: id })}`;
+    }
+
+    const generatePdf = () => {
+        const doc = new jsPDF();
+
+        // Header
+        doc.setFontSize(18);
+        doc.text('Laporan Penjualan', 14, 22);
+        doc.setFontSize(11);
+        doc.text(`Periode: ${getFormattedDateRange()}`, 14, 28);
+        
+        // Define columns
+        const tableColumn = ["ID Pesanan", "Tanggal", "Pelanggan", "Total Penjualan"];
+        // Define rows
+        const tableRows: (string|number)[][] = [];
+
+        deliveredOrders.forEach(order => {
+            const orderData = [
+                order.id.substring(0, 7),
+                formatDate(order.orderDate),
+                order.customerName,
+                formatPrice(order.totalAmount)
+            ];
+            tableRows.push(orderData);
+        });
+
+        // Add table
+        (doc as any).autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 35,
+        });
+
+        const finalY = (doc as any).lastAutoTable.finalY;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Total Pendapatan: ${formatPrice(totalRevenue)}`, 14, finalY + 10);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Laporan dibuat pada: ${formatDateFns(new Date(), "d LLL yyyy, HH:mm", { locale: id })}`, 14, finalY + 15);
+
+        // Download the PDF
+        doc.save('laporan-penjualan.pdf');
+    };
     
     return (
         <div className="space-y-6">
@@ -140,7 +189,7 @@ export default function SalesReportPage() {
                             />
                         </PopoverContent>
                     </Popover>
-                    <Button onClick={handlePrint} disabled={!deliveredOrders || deliveredOrders.length === 0}>
+                    <Button onClick={generatePdf} disabled={!deliveredOrders || deliveredOrders.length === 0}>
                         <Printer className="mr-2 h-4 w-4" />
                         Cetak Laporan
                     </Button>
@@ -193,14 +242,10 @@ export default function SalesReportPage() {
                 <CardFooter className="flex justify-end font-bold text-lg pr-6 pb-6">
                     <div className="flex items-center gap-4">
                         <span>Total Pendapatan:</span>
-                        <span>{formatPrice(totalRevenue)}</span>
+                        <span>{isLoading ? <Skeleton className="h-6 w-32" /> : formatPrice(totalRevenue)}</span>
                     </div>
                 </CardFooter>
             </Card>
-
-            <div style={{ display: 'none' }}>
-                <SalesReportPrint ref={printComponentRef} orders={deliveredOrders || []} totalRevenue={totalRevenue} dateRange={dateRange}/>
-            </div>
         </div>
     );
 }
