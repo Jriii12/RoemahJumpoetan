@@ -147,7 +147,7 @@ export default function PenjahitPage() {
       if (editingJob) {
         setJobName(editingJob.jobName);
         setTailorName(editingJob.tailorName);
-        setTailorAddress(editingJob.tailorAddress);
+        setTailorAddress(editingJob.tailorAddress || '');
         setClothingModel(editingJob.clothingModel);
         setFabricType(editingJob.fabricType);
         setClothingType(editingJob.clothingType);
@@ -412,7 +412,7 @@ export default function PenjahitPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="tailorAddress">Alamat Penjahit</Label>
-              <Textarea id="tailorAddress" value={tailorAddress} onChange={(e) => setTailorAddress(e.target.value)} placeholder="Masukkan alamat lengkap penjahit" required />
+              <Textarea id="tailorAddress" value={tailorAddress || ''} onChange={(e) => setTailorAddress(e.target.value)} placeholder="Masukkan alamat lengkap penjahit" required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
