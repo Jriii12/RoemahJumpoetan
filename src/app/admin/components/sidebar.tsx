@@ -12,6 +12,7 @@ import {
   LogOut,
   Pencil,
   Star,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,13 @@ const menuItems = [
     icon: ShoppingCart,
   },
   {
+    label: 'Laporan',
+    icon: FileText,
+    subItems: [
+      { label: 'Laporan Penjualan', href: '/admin/sales-report' },
+    ],
+  },
+  {
     label: 'Gudang',
     icon: Archive,
     subItems: [
@@ -78,6 +86,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
     Produk: false,
     Pesanan: false,
     Gudang: false,
+    Laporan: true, // Default open for the new menu
   });
   const auth = useAuth();
   const router = useRouter();
