@@ -88,6 +88,7 @@ export default function RegisterPage() {
         lastName: data.lastName,
         email: data.email,
         phoneNumber: data.phoneNumber,
+        role: 'owner', // Automatically assign 'owner' role on registration
       };
 
       // Create user document in Firestore
