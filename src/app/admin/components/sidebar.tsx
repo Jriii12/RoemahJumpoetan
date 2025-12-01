@@ -10,9 +10,9 @@ import {
   Archive,
   User,
   LogOut,
-  Pencil,
   Star,
   FileText,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -62,8 +62,12 @@ const menuItems = [
     subItems: [
       { label: 'Barang Mentah', href: '/admin/warehouse/inbound' },
       { label: 'Barang Jadi', href: '/admin/warehouse/outbound' },
-      { label: 'Penjahit', href: '/admin/warehouse/penjahit' },
     ],
+  },
+  {
+    label: 'Penjahit',
+    href: '/admin/warehouse/penjahit',
+    icon: Users,
   },
   {
     label: 'Informasi Akun',
@@ -86,7 +90,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
     Produk: false,
     Pesanan: false,
     Gudang: false,
-    Laporan: true, // Default open for the new menu
+    Laporan: true,
   });
   const auth = useAuth();
   const router = useRouter();
