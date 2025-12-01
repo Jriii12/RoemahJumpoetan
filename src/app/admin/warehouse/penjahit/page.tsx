@@ -148,7 +148,7 @@ export default function PenjahitPage() {
         setTailorName(editingJob.tailorName);
         setTailorAddress(editingJob.tailorAddress || '');
         setClothingModel(editingJob.clothingModel);
-        setFabricType(editingJob.fabricType);
+        setFabricType(editingJob.fabricType || '');
         setClothingType(editingJob.clothingType);
         setStartDate(editingJob.startDate);
         setDueDate(editingJob.dueDate);
