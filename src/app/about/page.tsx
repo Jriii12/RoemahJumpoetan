@@ -47,7 +47,7 @@ export default function AboutPage() {
         {/* Bagian Gambar (Kiri) */}
         <div className="w-full lg:w-1/2 relative min-h-[400px] lg:min-h-full">
           <Image
-            src="/img/kaintentang.jpg"
+            src="/img/kainnn.jpg"
             alt="Kain Jumputan Palembang"
             data-ai-hint="jumputan fabric"
             fill
