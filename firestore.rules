@@ -2,23 +2,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- HELPER FUNCTIONS ---
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // --- USER DATA ---
-    // Users can only read and write their own data.
-    match /users/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
-    }
-    
-    // --- PUBLIC & ADMIN DATA ---
-    // For all other collections (products, orders, etc.),
-    // allow full access if the user is authenticated.
-    // This is a simplified rule for development to ensure admin access.
-    match /{path=**} {
+    // Allow all authenticated users full read and write access to all documents.
+    // This is a broad rule for development purposes to resolve persistent permission issues.
+    match /{document=**} {
       allow read, write: if request.auth != null;
     }
   }
