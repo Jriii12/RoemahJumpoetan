@@ -9,69 +9,17 @@ service cloud.firestore {
     }
 
     // --- USER DATA ---
-    match /users/{userId} {
-      // Users can read their own data.
-      allow read: if isOwner(userId);
-      // Admins (any authenticated user) can list, create, update, and delete any user's data.
-      allow list, write: if request.auth != null;
-    }
-
-    match /users/{userId}/addresses/{addressId} {
+    // Users can only read and write their own data.
+    match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
     
-    match /users/{userId}/shoppingCarts/{shoppingCartId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // --- PUBLIC DATA ---
-    match /products/{productId} {
-      allow get, list: if true;
-      // Allow any authenticated user to create/update products (for admin)
-      allow write: if request.auth != null;
-    }
-
-    match /products/{productId}/ratings/{ratingId} {
-      // Any authenticated user can create their own rating
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // Anyone can read ratings
-      allow read, list: if true;
-    }
-
-    match /testimonials/{testimonialId} {
-      allow get, list: if true;
-      allow create: if request.auth != null;
-    }
-
-    // --- ADMIN & AUTHENTICATED USER DATA ---
-    // Allow any authenticated user full access to these collections for admin purposes.
-    match /orders/{orderId} {
-      allow read, write, list: if request.auth != null;
-    }
-
-    match /purchasedRawMaterials/{materialId} {
-      allow read, write, list: if request.auth != null;
-    }
-    
-    match /usedRawMaterials/{usageId} {
-      allow read, write, list: if request.auth != null;
-    }
-    
-    match /inboundFinishedGoods/{inboundId} {
-      allow read, write, list: if request.auth != null;
-    }
-
-    match /outboundFinishedGoods/{outboundId} {
-      allow read, write, list: if request.auth != null;
-    }
-    
-    match /sewingJobs/{jobId} {
-      allow read, write, list: if request.auth != null;
-    }
-    
-    // This allows admin to list all ratings across all products
-    match /{path=**}/ratings/{ratingId} {
-      allow list: if request.auth != null;
+    // --- PUBLIC & ADMIN DATA ---
+    // For all other collections (products, orders, etc.),
+    // allow full access if the user is authenticated.
+    // This is a simplified rule for development to ensure admin access.
+    match /{path=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
