@@ -4,7 +4,6 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import {
   Table,
   TableBody,
@@ -24,7 +23,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Printer, Calendar as CalendarIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SalesReportPrint } from './report';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
@@ -64,27 +62,26 @@ export default function SalesReportPage() {
     const ordersQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
-        const q = collection(firestore, 'orders');
-        const constraints = [orderBy('orderDate', 'desc')];
+        let q = query(collection(firestore, 'orders'), orderBy('orderDate'));
         
         if (dateRange?.from) {
-             constraints.unshift(where('orderDate', '>=', dateRange.from.toISOString()));
+             q = query(q, where('orderDate', '>=', dateRange.from.toISOString()));
         }
         if (dateRange?.to) {
             const toDate = new Date(dateRange.to);
             toDate.setHours(23, 59, 59, 999);
-            constraints.unshift(where('orderDate', '<=', toDate.toISOString()));
+            q = query(q, where('orderDate', '<=', toDate.toISOString()));
         }
         
-        return query(q, ...constraints);
+        return q;
     }, [firestore, dateRange]);
 
     const { data: allOrders, isLoading } = useCollection<Order>(ordersQuery);
     
     const deliveredOrders = useMemo(() => {
         if (!allOrders) return [];
+        // Filter and sort on the client-side
         const filtered = allOrders.filter(order => order.status === 'Delivered');
-        // Sort client-side because orderBy might conflict with `where` on a different field without a composite index.
         return filtered.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
     }, [allOrders]);
 
@@ -101,7 +98,8 @@ export default function SalesReportPage() {
         return `Mulai dari ${format(dateRange.from, "d LLL yyyy", { locale: id })}`;
     }
 
-    const generatePdf = () => {
+    const generatePdf = async () => {
+        const { default: autoTable } = await import('jspdf-autotable');
         const doc = new jsPDF();
 
         // Header
@@ -126,7 +124,7 @@ export default function SalesReportPage() {
         });
 
         // Add table
-        (doc as any).autoTable({
+        autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 35,
