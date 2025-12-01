@@ -63,6 +63,10 @@ export default function SalesReportPage() {
     const deliveredOrdersQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
+        // Start with the base query ordered by date
+        let q = query(collection(firestore, 'orders'), orderBy('orderDate'));
+
+        // Add constraints
         const constraints = [where('status', '==', 'Delivered')];
         if (dateRange?.from) {
              constraints.push(where('orderDate', '>=', dateRange.from.toISOString()));
@@ -73,15 +77,14 @@ export default function SalesReportPage() {
             constraints.push(where('orderDate', '<=', toDate.toISOString()));
         }
         
-        // REMOVED: orderBy('orderDate', 'desc') to prevent composite index error
-        return query(collection(firestore, 'orders'), ...constraints);
+        return query(q, ...constraints);
     }, [firestore, dateRange]);
 
     const { data: deliveredOrders, isLoading } = useCollection<Order>(deliveredOrdersQuery);
     
+    // Sort on the client-side to ensure descending order without needing a composite index
     const sortedOrders = useMemo(() => {
         if (!deliveredOrders) return [];
-        // Sort on the client-side
         return [...deliveredOrders].sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
     }, [deliveredOrders]);
 
