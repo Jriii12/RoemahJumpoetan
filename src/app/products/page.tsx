@@ -358,7 +358,7 @@ export default function ProductsPage() {
                       </DialogHeader>
 
                       {isClothing && (
-                      <div>
+                      <div className="py-4">
                           <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
                           <RadioGroup 
                           value={selectedSize} 
@@ -380,9 +380,9 @@ export default function ProductsPage() {
                       )}
                       
                       <div className="text-left space-y-2 text-base text-muted-foreground leading-relaxed">
-                          <ul className="list-disc list-inside space-y-1">
-                              {selectedProduct.description.split('\n').map((line, index) => (
-                                  line.trim() && <li key={index}>{line}</li>
+                           <ul className="list-disc list-inside space-y-1">
+                              {selectedProduct.description.split('\n').filter(line => line.trim()).map((line, index) => (
+                                  <li key={index}>{line}</li>
                               ))}
                           </ul>
                       </div>
