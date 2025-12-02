@@ -127,7 +127,7 @@ function ProductRatingForm({ productId }: { productId: string }) {
 
     return (
         <div className="pt-6 border-t mt-6">
-            <h3 className="font-semibold text-lg mb-4">Beri Ulasan Anda</h3>
+            <h3 className="font-semibold text-base mb-3">Beri Ulasan Anda</h3>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div>
                     <Controller
@@ -139,7 +139,7 @@ function ProductRatingForm({ productId }: { productId: string }) {
                                     <Star
                                         key={star}
                                         className={cn(
-                                            'h-6 w-6 cursor-pointer transition-colors',
+                                            'h-5 w-5 cursor-pointer transition-colors',
                                             (hoveredRating || field.value) >= star
                                                 ? 'text-yellow-400 fill-yellow-400'
                                                 : 'text-gray-400'
@@ -164,7 +164,8 @@ function ProductRatingForm({ productId }: { productId: string }) {
                             <Textarea
                                 {...field}
                                 placeholder="Bagaimana pendapat Anda tentang produk ini?"
-                                rows={4}
+                                rows={3}
+                                className="text-sm"
                             />
                         )}
                     />
@@ -328,75 +329,80 @@ export default function ProductsPage() {
       </div>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-3xl bg-card">
+        <DialogContent className="sm:max-w-3xl bg-card p-0">
           {selectedProduct && (
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start'>
-                <div className='relative aspect-[3/4] rounded-lg overflow-hidden'>
+            <div className='grid grid-cols-1 md:grid-cols-2'>
+                <div className='relative aspect-[3/4]'>
                      <Image
                         src={selectedProduct.imageUrl}
                         alt={selectedProduct.name}
                         data-ai-hint={selectedProduct.imageHint}
                         fill
-                        className="object-cover"
+                        className="object-cover rounded-l-lg"
                     />
                 </div>
-                <div className='flex flex-col h-full pt-2 md:pt-4'>
-                    <DialogHeader>
-                        <DialogTitle className='font-headline text-2xl md:text-3xl mb-2 text-left'>{selectedProduct.name}</DialogTitle>
-                         <div className='flex items-center justify-between text-left'>
-                            <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
-                            <p className="font-bold text-primary text-xl">
-                                {formatPrice(selectedProduct.price)}
-                            </p>
-                         </div>
-                    </DialogHeader>
+                <div className='flex flex-col h-full p-6'>
+                    <div className="flex flex-col flex-grow">
+                        <DialogHeader className="mb-4">
+                            <DialogTitle className='font-headline text-2xl mb-2 text-left'>{selectedProduct.name}</DialogTitle>
+                             <div className='flex items-center justify-between text-left'>
+                                <p className='text-xs text-muted-foreground'>{selectedProduct.category}</p>
+                                <p className="font-bold text-primary text-lg">
+                                    {formatPrice(selectedProduct.price)}
+                                </p>
+                             </div>
+                        </DialogHeader>
 
-                    {isClothing && (
-                      <div className="my-4">
-                        <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
-                        <RadioGroup 
-                          value={selectedSize} 
-                          onValueChange={setSelectedSize}
-                          className="flex items-center gap-2"
-                        >
-                          {availableSizes.map(size => (
-                            <Label 
-                              key={size}
-                              htmlFor={`size-${size}`}
-                              className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
+                        {isClothing && (
+                          <div className="my-2">
+                            <Label className="font-semibold text-xs mb-2 block">Pilih Ukuran:</Label>
+                            <RadioGroup 
+                              value={selectedSize} 
+                              onValueChange={setSelectedSize}
+                              className="flex items-center gap-2"
                             >
-                              <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
-                              {size}
-                            </Label>
-                          ))}
-                        </RadioGroup>
-                      </div>
-                    )}
-                    
-                    <div className='flex-grow my-4 text-left'>
-                        <div className="text-left space-y-2 text-base text-muted-foreground leading-relaxed pt-4">
-                          <p className='text-sm font-semibold text-foreground'>Deskripsi Produk:</p>
-                          <ul className="list-disc list-inside space-y-1">
-                            {selectedProduct.description.split('\n').filter(line => line.trim()).map((line, index) => (
-                              <li key={index}>{line}</li>
-                            ))}
-                          </ul>
+                              {availableSizes.map(size => (
+                                <Label 
+                                  key={size}
+                                  htmlFor={`size-${size}`}
+                                  className={cn(
+                                      'flex items-center justify-center rounded-md border text-xs h-8 w-8 cursor-pointer transition-colors',
+                                      selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'
+                                  )}
+                                >
+                                  <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                                  {size}
+                                </Label>
+                              ))}
+                            </RadioGroup>
+                          </div>
+                        )}
+                        
+                        <div className='flex-grow my-4 text-left overflow-y-auto max-h-[20vh] pr-2'>
+                            <div className="text-left space-y-2 text-sm text-muted-foreground leading-relaxed">
+                              <p className='text-xs font-semibold text-foreground'>Deskripsi Produk:</p>
+                              <ul className="list-disc list-inside space-y-1 text-xs">
+                                {selectedProduct.description.split('\n').filter(line => line.trim()).map((line, index) => (
+                                  <li key={index}>{line}</li>
+                                ))}
+                              </ul>
+                            </div>
                         </div>
+                        <ProductRatingForm productId={selectedProduct.id} />
                     </div>
 
-                     <div className="flex flex-col gap-2 mt-auto">
-                        <Button size="lg" onClick={handleAddToCartFromDetail}>
-                          <ShoppingCart className="mr-2 h-5 w-5" />
+                     <div className="flex flex-col gap-2 mt-4 pt-4 border-t">
+                        <Button size="sm" onClick={handleAddToCartFromDetail}>
+                          <ShoppingCart className="mr-2 h-4 w-4" />
                           Tambah ke Keranjang
                         </Button>
                         <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
-                          <Button variant="outline" size="lg" className="w-full">
-                            <Phone className="mr-2 h-5 w-5" />
+                          <Button variant="outline" size="sm" className="w-full">
+                            <Phone className="mr-2 h-4 w-4" />
                             Hubungi Admin
                           </Button>
                         </a>
                       </div>
-                    <ProductRatingForm productId={selectedProduct.id} />
                 </div>
             </div>
           )}
