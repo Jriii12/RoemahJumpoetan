@@ -287,9 +287,10 @@
         "name": { "type": "string", "description": "Name of the raw material." },
         "quantity": { "type": "string", "description": "Quantity purchased (e.g., '50 meter')." },
         "storeName": { "type": "string", "description": "Name of the store where it was purchased." },
-        "purchaseDate": { "type": "string", "format": "date" }
+        "purchaseDate": { "type": "string", "format": "date" },
+        "price": { "type": "number", "description": "Total price of the purchase."}
       },
-      "required": ["id", "name", "quantity", "storeName", "purchaseDate"]
+      "required": ["id", "name", "quantity", "storeName", "purchaseDate", "price"]
     },
     "UsedRawMaterial": {
       "title": "Used Raw Material",
@@ -523,5 +524,3 @@
     "reasoning": "The Firestore structure is designed to provide a secure and scalable data model for the Roemah Jumpoetan Palembang application, focusing on authorization independence and clear access patterns.  The design adheres to the principle of Authorization Independence by avoiding `get()` calls in security rules. All security rules will rely solely on `request.auth.uid` and data present within the document being accessed, ensuring atomic operations and simplifying debugging. Data is segregated based on its access requirements. Path-based ownership is used for user-specific data, and there are no global roles. The structure supports secure `list` operations by ensuring that all documents in a collection have the same security posture."
   }
 }
-
-    

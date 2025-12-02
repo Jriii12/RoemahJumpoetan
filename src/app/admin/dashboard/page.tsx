@@ -22,10 +22,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Archive,
-  ArrowDown,
-  ArrowUp,
-  BarChart,
   Box,
   Calendar as CalendarIcon,
   DollarSign,
@@ -35,7 +31,6 @@ import {
 } from 'lucide-react';
 import { AdminDonutChart } from '../components/charts';
 import { Skeleton } from '@/components/ui/skeleton';
-import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
@@ -45,6 +40,8 @@ import { collection, query, orderBy, limit, where } from 'firebase/firestore';
 type Order = {
   totalAmount: number;
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  products: { id: string; name: string; quantity: number; price: number }[];
+  paymentMethod?: 'cod' | 'qris';
 };
 
 type InboundRecord = {
@@ -54,6 +51,11 @@ type InboundRecord = {
 type OutboundRecord = {
   quantity: number;
 };
+
+type PurchasedMaterial = {
+    quantity: string;
+    price: number;
+}
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -72,13 +74,11 @@ const MetricCard = ({
   value,
   icon: Icon,
   isLoading,
-  trend,
 }: {
   title: string;
   value: string;
   icon: React.ElementType;
   isLoading?: boolean;
-  trend?: { value: string; direction: 'up' | 'down' };
 }) => (
   <Card>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -87,24 +87,9 @@ const MetricCard = ({
     </CardHeader>
     <CardContent>
       {isLoading ? (
-        <>
-            <Skeleton className='h-8 w-3/4' />
-            <Skeleton className='h-4 w-1/2 mt-2' />
-        </>
+        <Skeleton className='h-8 w-3/4' />
       ) : (
-        <>
-            <div className="text-2xl font-bold">{value}</div>
-            {trend && (
-                <p className="text-xs text-muted-foreground flex items-center">
-                {trend.direction === 'up' ? (
-                    <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
-                ) : (
-                    <ArrowDown className="h-3 w-3 text-red-500 mr-1" />
-                )}
-                {trend.value} dari bulan lalu
-                </p>
-            )}
-        </>
+        <div className="text-2xl font-bold">{value}</div>
       )}
     </CardContent>
   </Card>
@@ -123,11 +108,11 @@ export default function AdminDashboardPage() {
   const firestore = useFirestore();
 
   // --- Data Fetching ---
-  const deliveredOrdersQuery = useMemoFirebase(() => {
+  const ordersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'orders'), where('status', '==', 'Delivered'));
+    return query(collection(firestore, 'orders'));
   }, [firestore]);
-  const { data: deliveredOrders, isLoading: isLoadingSales } = useCollection<Order>(deliveredOrdersQuery);
+  const { data: allOrders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
   const inboundQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -147,11 +132,30 @@ export default function AdminDashboardPage() {
   }, [firestore]);
   const { data: lowStockProducts, isLoading: isLoadingLowStock } = useCollection<{name: string, stock: number}>(lowStockQuery);
 
+  const purchasedMaterialsQuery = useMemoFirebase(() => {
+    if(!firestore) return null;
+    return query(collection(firestore, 'purchasedRawMaterials'));
+  }, [firestore]);
+  const { data: purchasedMaterials, isLoading: isLoadingPurchases } = useCollection<PurchasedMaterial>(purchasedMaterialsQuery);
+
 
   // --- Data Calculation ---
-  const totalSales = useMemo(() => {
-    return deliveredOrders?.reduce((sum, order) => sum + order.totalAmount, 0) || 0;
-  }, [deliveredOrders]);
+  const { deliveredOrders, totalSales, paymentMethodCounts } = useMemo(() => {
+    if (!allOrders) return { deliveredOrders: [], totalSales: 0, paymentMethodCounts: { cod: 0, qris: 0 } };
+    const delivered = allOrders.filter(o => o.status === 'Delivered');
+    const sales = delivered.reduce((sum, order) => sum + order.totalAmount, 0);
+    const counts = delivered.reduce((acc, order) => {
+        if (order.paymentMethod === 'cod') acc.cod++;
+        if (order.paymentMethod === 'qris') acc.qris++;
+        return acc;
+    }, { cod: 0, qris: 0 });
+    return { deliveredOrders: delivered, totalSales: sales, paymentMethodCounts: counts };
+  }, [allOrders]);
+  
+  const totalOutlay = useMemo(() => {
+    if(!purchasedMaterials) return 0;
+    return purchasedMaterials.reduce((sum, item) => sum + (item.price || 0), 0);
+  }, [purchasedMaterials]);
 
   const totalInboundItems = useMemo(() => {
     return inboundRecords?.reduce((sum, record) => sum + record.quantity, 0) || 0;
@@ -160,15 +164,24 @@ export default function AdminDashboardPage() {
   const totalOutboundItems = useMemo(() => {
     return outboundRecords?.reduce((sum, record) => sum + record.quantity, 0) || 0;
   }, [outboundRecords]);
+  
+  const bestSellers = useMemo(() => {
+    if (!deliveredOrders) return [];
+    const productSales: Record<string, {name: string, purchases: number}> = {};
 
-  const bestSellers = [
-    { id: '1', name: 'Kain Jumputan Merah', purchases: 120 },
-    { id: '2', name: 'Gaun Pesta Jumputan', purchases: 95 },
-    { id: '3', name: 'Kemeja Pria Jumputan', purchases: 80 },
-    { id: '4', name: 'Selendang Sutra', purchases: 72 },
-    { id: '5', name: 'Blouse Wanita Modern', purchases: 65 },
-  ];
-  const isLoadingBestSellers = false;
+    deliveredOrders.forEach(order => {
+        order.products.forEach(product => {
+            if(!productSales[product.id]) {
+                productSales[product.id] = { name: product.name, purchases: 0 };
+            }
+            productSales[product.id].purchases += product.quantity;
+        })
+    });
+
+    return Object.values(productSales)
+        .sort((a,b) => b.purchases - a.purchases)
+        .slice(0, 5);
+  }, [deliveredOrders]);
   
   const getStockStatus = (stock: number): 'tersedia' | 'hampir habis' | 'habis' => {
     if (stock <= 0) return 'habis';
@@ -176,7 +189,7 @@ export default function AdminDashboardPage() {
     return 'tersedia';
   }
 
-  const isLoadingMetrics = isLoadingSales || isLoadingInbound || isLoadingOutbound;
+  const isLoadingMetrics = isLoadingOrders || isLoadingInbound || isLoadingOutbound || isLoadingPurchases;
 
 
   return (
@@ -204,13 +217,13 @@ export default function AdminDashboardPage() {
           title="Total Penjualan"
           value={formatPrice(totalSales)}
           icon={DollarSign}
-          isLoading={isLoadingSales}
+          isLoading={isLoadingOrders}
         />
         <MetricCard
           title="Total Pesanan Selesai"
           value={formatNumber(deliveredOrders?.length || 0)}
           icon={ShoppingCart}
-          isLoading={isLoadingSales}
+          isLoading={isLoadingOrders}
         />
         <MetricCard
           title="Total Barang Masuk"
@@ -232,7 +245,7 @@ export default function AdminDashboardPage() {
                 <CardTitle className='text-base'>Total Uang Masuk</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-xl font-bold">{formatPrice(30973000)}</p>
+                {isLoadingOrders ? <Skeleton className="h-7 w-3/4"/> : <p className="text-xl font-bold">{formatPrice(totalSales)}</p>}
             </CardContent>
         </Card>
          <Card className="md:col-span-1">
@@ -240,7 +253,7 @@ export default function AdminDashboardPage() {
                 <CardTitle className='text-base'>Total Uang Keluar</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-xl font-bold">{formatPrice(28088000)}</p>
+                {isLoadingPurchases ? <Skeleton className="h-7 w-3/4"/> : <p className="text-xl font-bold">{formatPrice(totalOutlay)}</p>}
             </CardContent>
         </Card>
          <Card className="md:col-span-1">
@@ -248,7 +261,7 @@ export default function AdminDashboardPage() {
                 <CardTitle className='text-base'>Total Uang Toko</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-xl font-bold">{formatPrice(2885000)}</p>
+                {isLoadingMetrics ? <Skeleton className="h-7 w-3/4"/> : <p className="text-xl font-bold">{formatPrice(totalSales - totalOutlay)}</p>}
             </CardContent>
         </Card>
       </div>
@@ -267,17 +280,21 @@ export default function AdminDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoadingBestSellers ? Array.from({length: 5}).map((_, i) => (
+                {isLoadingOrders ? Array.from({length: 5}).map((_, i) => (
                     <TableRow key={i}>
                         <TableCell><Skeleton className='h-8 w-full'/></TableCell>
                         <TableCell><Skeleton className='h-8 w-full'/></TableCell>
                     </TableRow>
-                )) : bestSellers && bestSellers.map((product) => (
-                  <TableRow key={product.id}>
+                )) : bestSellers.length > 0 ? bestSellers.map((product) => (
+                  <TableRow key={product.name}>
                     <TableCell className='font-medium'>{product.name}</TableCell>
                     <TableCell className="text-right">{product.purchases}</TableCell>
                   </TableRow>
-                ))}
+                )) : (
+                    <TableRow>
+                        <TableCell colSpan={2} className="text-center h-24">Belum ada penjualan.</TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -327,7 +344,9 @@ export default function AdminDashboardPage() {
             <CardTitle>Transaksi per Metode Pembayaran</CardTitle>
           </CardHeader>
           <CardContent>
-            <AdminDonutChart type="paymentMethod" />
+            {isLoadingOrders ? <div className='h-[250px] flex items-center justify-center'><Skeleton className="h-48 w-48 rounded-full"/></div> : 
+            <AdminDonutChart type="paymentMethod" data={{ cash: paymentMethodCounts.cod, qris: paymentMethodCounts.qris }} />
+            }
           </CardContent>
         </Card>
         <Card>
@@ -335,7 +354,9 @@ export default function AdminDashboardPage() {
             <CardTitle>Arus Kas</CardTitle>
           </CardHeader>
           <CardContent>
-            <AdminDonutChart type="cashflow" />
+             {isLoadingMetrics ? <div className='h-[250px] flex items-center justify-center'><Skeleton className="h-48 w-48 rounded-full"/></div> : 
+                <AdminDonutChart type="cashflow" data={{ sales: totalSales, purchase: totalOutlay }} />
+             }
           </CardContent>
         </Card>
       </div>

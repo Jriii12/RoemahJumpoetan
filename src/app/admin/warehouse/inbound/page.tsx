@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -58,6 +59,7 @@ type PurchasedMaterial = {
   quantity: string;
   storeName: string;
   purchaseDate: string;
+  price: number;
 };
 
 type UsedMaterial = {
@@ -95,6 +97,7 @@ export default function BarangMentahPage() {
   const [newPurchaseName, setNewPurchaseName] = useState('');
   const [purchaseStore, setPurchaseStore] = useState('');
   const [purchaseQuantity, setPurchaseQuantity] = useState('');
+  const [purchasePrice, setPurchasePrice] = useState(0);
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
 
 
@@ -129,6 +132,7 @@ export default function BarangMentahPage() {
     setNewPurchaseName('');
     setPurchaseStore('');
     setPurchaseQuantity('');
+    setPurchasePrice(0);
     setPurchaseDate(new Date().toISOString().split('T')[0]);
     setEditingPurchase(null);
   };
@@ -139,6 +143,7 @@ export default function BarangMentahPage() {
         setPurchaseName(editingPurchase.name);
         setPurchaseStore(editingPurchase.storeName);
         setPurchaseQuantity(editingPurchase.quantity);
+        setPurchasePrice(editingPurchase.price || 0);
         setPurchaseDate(editingPurchase.purchaseDate);
       } else {
         resetPurchaseForm();
@@ -178,6 +183,7 @@ export default function BarangMentahPage() {
       quantity: purchaseQuantity,
       storeName: purchaseStore,
       purchaseDate: purchaseDate,
+      price: purchasePrice,
     };
     
     if (!purchaseData.name) {
@@ -345,6 +351,7 @@ export default function BarangMentahPage() {
                   <TableHead>Jumlah</TableHead>
                   <TableHead>Nama Toko</TableHead>
                   <TableHead>Tanggal Beli</TableHead>
+                  <TableHead>Harga</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -352,7 +359,7 @@ export default function BarangMentahPage() {
                 {isLoadingPurchases ? (
                     Array.from({length: 4}).map((_,i) => (
                         <TableRow key={i}>
-                            <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
+                            <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
                         </TableRow>
                     ))
                 ) : purchasedMaterials && purchasedMaterials.length > 0 ? (
@@ -362,6 +369,7 @@ export default function BarangMentahPage() {
                         <TableCell>{material.quantity}</TableCell>
                         <TableCell>{material.storeName}</TableCell>
                         <TableCell>{formatDate(material.purchaseDate)}</TableCell>
+                        <TableCell>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(material.price || 0)}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditPurchaseClick(material)}>
                             <Pencil className="h-4 w-4" />
@@ -390,7 +398,7 @@ export default function BarangMentahPage() {
                     ))
                 ) : (
                      <TableRow>
-                        <TableCell colSpan={5} className='h-24 text-center'>Belum ada riwayat pembelian.</TableCell>
+                        <TableCell colSpan={6} className='h-24 text-center'>Belum ada riwayat pembelian.</TableCell>
                     </TableRow>
                 )}
               </TableBody>
@@ -505,6 +513,18 @@ export default function BarangMentahPage() {
               />
             </div>
             <div className="space-y-2">
+                <Label htmlFor="price">Total Harga</Label>
+                <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    value={purchasePrice}
+                    onChange={(e) => setPurchasePrice(Number(e.target.value))}
+                    placeholder="Contoh: 500000"
+                    required
+                />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="purchaseDate">Tanggal Beli</Label>
               <Input
                 id="purchaseDate"
@@ -582,9 +602,7 @@ export default function BarangMentahPage() {
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  Batal
-                </Button>
+                <Button type="button" variant="outline">Batal</Button>
               </DialogClose>
               <Button type="submit">
                 Simpan
@@ -596,3 +614,4 @@ export default function BarangMentahPage() {
     </>
   );
 }
+

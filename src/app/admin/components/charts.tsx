@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -9,26 +10,16 @@ import {
 import { useMemo } from 'react';
 import { Pie, PieChart, Cell } from 'recharts';
 
-const paymentMethodData = [
-  { method: 'Cash', value: 45, fill: 'hsl(var(--chart-1))' },
-  { method: 'QRIS', value: 55, fill: 'hsl(var(--chart-2))' },
-];
-
-const cashflowData = [
-    { type: 'initial_capital', value: 25, fill: 'hsl(var(--chart-1))' },
-    { type: 'purchase_stock', value: 40, fill: 'hsl(var(--chart-4))' },
-    { type: 'sales', value: 35, fill: 'hsl(var(--chart-2))' },
-]
 
 const paymentMethodChartConfig = {
   value: {
     label: 'Transaksi',
   },
-  Cash: {
-    label: 'Cash',
+  cash: {
+    label: 'Cash/COD',
     color: 'hsl(var(--chart-1))',
   },
-  QRIS: {
+  qris: {
     label: 'QRIS',
     color: 'hsl(var(--chart-2))',
   },
@@ -38,32 +29,54 @@ const cashflowChartConfig = {
     value: {
         label: 'Nilai'
     },
-    initial_capital: {
-        label: 'Initial Capital',
-        color: 'hsl(var(--chart-1))'
-    },
-    purchase_stock: {
-        label: 'Purchase Stock',
-        color: 'hsl(var(--chart-4))'
-    },
     sales: {
-        label: 'Sales',
+        label: 'Uang Masuk (Penjualan)',
         color: 'hsl(var(--chart-2))'
+    },
+    purchase: {
+        label: 'Uang Keluar (Pembelian)',
+        color: 'hsl(var(--chart-4))'
     }
 } satisfies ChartConfig;
 
-export function AdminDonutChart({ type }: { type: 'paymentMethod' | 'cashflow' }) {
+interface ChartProps {
+    type: 'paymentMethod' | 'cashflow';
+    data: Record<string, number>;
+}
+
+export function AdminDonutChart({ type, data: chartData }: ChartProps) {
     
   const { data, config } = useMemo(() => {
     if (type === 'paymentMethod') {
-      return { data: paymentMethodData, config: paymentMethodChartConfig };
+      return { 
+          data: [
+            { method: 'cash', value: chartData.cash || 0, fill: 'hsl(var(--chart-1))' },
+            { method: 'qris', value: chartData.qris || 0, fill: 'hsl(var(--chart-2))' },
+          ], 
+          config: paymentMethodChartConfig 
+      };
     }
-    return { data: cashflowData, config: cashflowChartConfig };
-  }, [type]);
+    // cashflow
+    return { 
+        data: [
+            { flow: 'sales', value: chartData.sales || 0, fill: 'hsl(var(--chart-2))' },
+            { flow: 'purchase', value: chartData.purchase || 0, fill: 'hsl(var(--chart-4))' },
+        ], 
+        config: cashflowChartConfig 
+    };
+  }, [type, chartData]);
 
   const id = `donut-chart-${type}`;
-  const totalValue = useMemo(() => data.reduce((acc, curr) => acc + curr.value, 0), [data]);
 
+  // Don't render chart if all data points are zero
+  const totalValue = useMemo(() => data.reduce((acc, curr) => acc + curr.value, 0), [data]);
+  if(totalValue === 0) {
+      return (
+          <div className="flex h-[250px] items-center justify-center text-muted-foreground">
+              Tidak ada data untuk ditampilkan.
+          </div>
+      )
+  }
 
   return (
     <div className="flex items-center justify-center">
@@ -80,13 +93,12 @@ export function AdminDonutChart({ type }: { type: 'paymentMethod' | 'cashflow' }
           <Pie
             data={data}
             dataKey="value"
-            nameKey={type === 'paymentMethod' ? 'method' : 'type'}
+            nameKey={type === 'paymentMethod' ? 'method' : 'flow'}
             innerRadius={60}
             strokeWidth={5}
           >
-             <Cell key="total" fill="var(--color-total)" />
              {data.map((entry) => (
-                <Cell key={entry[type === 'paymentMethod' ? 'method' : 'type']} fill={entry.fill} />
+                <Cell key={entry[type === 'paymentMethod' ? 'method' : 'flow']} fill={entry.fill} />
              ))}
           </Pie>
         </PieChart>
