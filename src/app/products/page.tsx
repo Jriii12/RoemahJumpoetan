@@ -37,6 +37,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 const categories = [
   'Semua Produk',
@@ -328,81 +330,84 @@ export default function ProductsPage() {
       </div>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-4xl bg-card">
+        <DialogContent className="sm:max-w-3xl bg-card p-0">
           {selectedProduct && (
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start'>
-                <div className='flex flex-col gap-6'>
-                    <div className='relative aspect-[3/4] rounded-lg overflow-hidden'>
-                         <Image
-                            src={selectedProduct.imageUrl}
-                            alt={selectedProduct.name}
-                            data-ai-hint={selectedProduct.imageHint}
-                            fill
-                            className="object-cover"
-                        />
-                    </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 max-h-[90vh]'>
+                <div className='relative aspect-[3/4] md:aspect-auto rounded-t-lg md:rounded-l-lg md:rounded-tr-none overflow-hidden'>
+                     <Image
+                        src={selectedProduct.imageUrl}
+                        alt={selectedProduct.name}
+                        data-ai-hint={selectedProduct.imageHint}
+                        fill
+                        className="object-cover"
+                    />
                 </div>
-                <div className='flex flex-col h-full'>
-                    <div className='flex-grow'>
-                        <DialogHeader>
-                            <DialogTitle className='font-headline text-2xl md:text-3xl mb-2 text-left'>{selectedProduct.name}</DialogTitle>
-                            <div className='flex items-center justify-between text-left'>
-                                <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
-                                <p className="font-bold text-primary text-xl">
-                                    {formatPrice(selectedProduct.price)}
-                                </p>
-                            </div>
-                        </DialogHeader>
+                <div className='flex flex-col'>
+                  <ScrollArea className="h-[90vh] md:h-auto">
+                    <div className="p-6 flex flex-col gap-4 h-full">
+                      <div className='flex-grow'>
+                          <DialogHeader className="text-left">
+                              <DialogTitle className='font-headline text-2xl md:text-3xl mb-2'>{selectedProduct.name}</DialogTitle>
+                              <div className='flex items-center justify-between'>
+                                  <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
+                                  <p className="font-bold text-primary text-xl">
+                                      {formatPrice(selectedProduct.price)}
+                                  </p>
+                              </div>
+                          </DialogHeader>
 
-                        {isClothing && (
-                        <div className="my-4">
-                            <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
-                            <RadioGroup 
-                            value={selectedSize} 
-                            onValueChange={setSelectedSize}
-                            className="flex items-center gap-2"
-                            >
-                            {availableSizes.map(size => (
-                                <Label 
-                                key={size}
-                                htmlFor={`size-${size}`}
-                                className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
-                                >
-                                <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
-                                {size}
-                                </Label>
-                            ))}
-                            </RadioGroup>
-                        </div>
-                        )}
-                        
-                        <div className='my-4 text-left'>
-                            <DialogDescription asChild>
-                                <div className="space-y-2 text-base text-muted-foreground leading-relaxed">
-                                    {selectedProduct.description.split('\n').map((line, index) => (
-                                        line.trim() && <p key={index}>{line}</p>
-                                    ))}
-                                </div>
-                            </DialogDescription>
-                        </div>
-                    </div>
-                    
-                    <div className="flex flex-col gap-4 mt-auto">
-                        <div className="flex flex-col gap-2">
-                            <Button size="lg" onClick={handleAddToCartFromDetail}>
-                            <ShoppingCart className="mr-2 h-5 w-5" />
-                            Tambah ke Keranjang
-                            </Button>
-                            <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="lg" className="w-full">
-                                <Phone className="mr-2 h-5 w-5" />
-                                Hubungi Admin
-                            </Button>
-                            </a>
-                        </div>
+                          {isClothing && (
+                          <div className="my-4">
+                              <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
+                              <RadioGroup 
+                              value={selectedSize} 
+                              onValueChange={setSelectedSize}
+                              className="flex items-center gap-2"
+                              >
+                              {availableSizes.map(size => (
+                                  <Label 
+                                  key={size}
+                                  htmlFor={`size-${size}`}
+                                  className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
+                                  >
+                                  <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                                  {size}
+                                  </Label>
+                              ))}
+                              </RadioGroup>
+                          </div>
+                          )}
+                          
+                          <DialogDescription asChild>
+                              <div className="my-4 text-left space-y-2 text-base text-muted-foreground leading-relaxed">
+                                  <ul className="list-disc list-inside space-y-1">
+                                      {selectedProduct.description.split('\n').map((line, index) => (
+                                          line.trim() && <li key={index}>{line}</li>
+                                      ))}
+                                  </ul>
+                              </div>
+                          </DialogDescription>
+                          
+                          <Separator className="my-6" />
 
-                         <ProductRatingForm productId={selectedProduct.id} />
+                          <ProductRatingForm productId={selectedProduct.id} />
+
                       </div>
+                      
+                      <div className="flex flex-col gap-2 mt-6 sticky bottom-0 bg-card pt-4">
+                          <Button size="lg" onClick={handleAddToCartFromDetail}>
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                          Tambah ke Keranjang
+                          </Button>
+                          <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
+                          <Button variant="outline" size="lg" className="w-full">
+                              <Phone className="mr-2 h-5 w-5" />
+                              Hubungi Admin
+                          </Button>
+                          </a>
+                      </div>
+                    </div>
+                  </ScrollArea>
                 </div>
             </div>
           )}
