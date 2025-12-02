@@ -328,86 +328,77 @@ export default function ProductsPage() {
       </div>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-4xl p-0 max-h-[90vh] grid grid-cols-1 md:grid-cols-2 gap-0">
+        <DialogContent className="sm:max-w-3xl bg-card">
           {selectedProduct && (
-            <>
-              {/* Left: Image */}
-              <div className='relative h-[50vh] md:h-full w-full'>
-                <Image
-                  src={selectedProduct.imageUrl}
-                  alt={selectedProduct.name}
-                  data-ai-hint={selectedProduct.imageHint}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-
-              {/* Right: Content */}
-              <div className='flex flex-col h-full max-h-[90vh] md:max-h-none'>
-                
-                {/* Scrollable Area */}
-                <div className="flex-grow overflow-y-auto p-6 space-y-4">
-                  <DialogHeader className="text-left">
-                    <DialogTitle className='font-headline text-2xl md:text-3xl'>{selectedProduct.name}</DialogTitle>
-                    <div className='flex items-center justify-between'>
-                      <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
-                      <p className="font-bold text-primary text-xl">
-                        {formatPrice(selectedProduct.price)}
-                      </p>
-                    </div>
-                  </DialogHeader>
-
-                  {isClothing && (
-                    <div className="pt-4">
-                      <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
-                      <RadioGroup
-                        value={selectedSize}
-                        onValueChange={setSelectedSize}
-                        className="flex items-center gap-2"
-                      >
-                        {availableSizes.map(size => (
-                          <Label
-                            key={size}
-                            htmlFor={`size-${size}`}
-                            className={cn('flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors', selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80')}
-                          >
-                            <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
-                            {size}
-                          </Label>
-                        ))}
-                      </RadioGroup>
-                    </div>
-                  )}
-
-                  <div className="text-left space-y-2 text-base text-muted-foreground leading-relaxed pt-4">
-                     <p className='text-sm font-semibold text-foreground'>Deskripsi Produk:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      {selectedProduct.description.split('\n').filter(line => line.trim()).map((line, index) => (
-                        <li key={index}>{line}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <ProductRatingForm productId={selectedProduct.id} />
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start'>
+                <div className='relative aspect-[3/4] rounded-lg overflow-hidden'>
+                     <Image
+                        src={selectedProduct.imageUrl}
+                        alt={selectedProduct.name}
+                        data-ai-hint={selectedProduct.imageHint}
+                        fill
+                        className="object-cover"
+                    />
                 </div>
+                <div className='flex flex-col h-full pt-2 md:pt-4'>
+                    <DialogHeader>
+                        <DialogTitle className='font-headline text-2xl md:text-3xl mb-2 text-left'>{selectedProduct.name}</DialogTitle>
+                         <div className='flex items-center justify-between text-left'>
+                            <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
+                            <p className="font-bold text-primary text-xl">
+                                {formatPrice(selectedProduct.price)}
+                            </p>
+                         </div>
+                    </DialogHeader>
 
-                {/* Sticky Footer */}
-                <div className="flex-shrink-0 p-6 border-t bg-card/95 backdrop-blur-sm">
-                  <div className="flex flex-col gap-2">
-                    <Button size="lg" onClick={handleAddToCartFromDetail}>
-                      <ShoppingCart className="mr-2 h-5 w-5" />
-                      Tambah ke Keranjang
-                    </Button>
-                    <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="lg" className="w-full">
-                        <Phone className="mr-2 h-5 w-5" />
-                        Hubungi Admin
-                      </Button>
-                    </a>
-                  </div>
+                    {isClothing && (
+                      <div className="my-4">
+                        <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
+                        <RadioGroup 
+                          value={selectedSize} 
+                          onValueChange={setSelectedSize}
+                          className="flex items-center gap-2"
+                        >
+                          {availableSizes.map(size => (
+                            <Label 
+                              key={size}
+                              htmlFor={`size-${size}`}
+                              className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
+                            >
+                              <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                              {size}
+                            </Label>
+                          ))}
+                        </RadioGroup>
+                      </div>
+                    )}
+                    
+                    <div className='flex-grow my-4 text-left'>
+                        <div className="text-left space-y-2 text-base text-muted-foreground leading-relaxed pt-4">
+                          <p className='text-sm font-semibold text-foreground'>Deskripsi Produk:</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            {selectedProduct.description.split('\n').filter(line => line.trim()).map((line, index) => (
+                              <li key={index}>{line}</li>
+                            ))}
+                          </ul>
+                        </div>
+                    </div>
+
+                     <div className="flex flex-col gap-2 mt-auto">
+                        <Button size="lg" onClick={handleAddToCartFromDetail}>
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                          Tambah ke Keranjang
+                        </Button>
+                        <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
+                          <Button variant="outline" size="lg" className="w-full">
+                            <Phone className="mr-2 h-5 w-5" />
+                            Hubungi Admin
+                          </Button>
+                        </a>
+                      </div>
+                    <ProductRatingForm productId={selectedProduct.id} />
                 </div>
-              </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
