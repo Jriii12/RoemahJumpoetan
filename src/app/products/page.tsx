@@ -125,7 +125,7 @@ function ProductRatingForm({ productId }: { productId: string }) {
     }
 
     return (
-        <div className="pt-6 border-t">
+        <div className="pt-6 border-t mt-6">
             <h3 className="font-semibold text-lg mb-4">Beri Ulasan Anda</h3>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div>
@@ -327,83 +327,83 @@ export default function ProductsPage() {
       </div>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-3xl bg-card p-0 h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-4xl p-0 max-h-[90vh]">
           {selectedProduct && (
-            <div className='grid md:grid-cols-2 h-full overflow-hidden'>
-                {/* Left: Image */}
-                <div className='relative h-full hidden md:block'>
-                     <Image
-                        src={selectedProduct.imageUrl}
-                        alt={selectedProduct.name}
-                        data-ai-hint={selectedProduct.imageHint}
-                        fill
-                        className="object-cover"
-                    />
-                </div>
+            <div className='grid md:grid-cols-2 h-full'>
+              {/* Left: Image */}
+              <div className='relative h-full hidden md:block'>
+                <Image
+                  src={selectedProduct.imageUrl}
+                  alt={selectedProduct.name}
+                  data-ai-hint={selectedProduct.imageHint}
+                  fill
+                  className="object-cover"
+                />
+              </div>
 
-                {/* Right: Content */}
-                <div className='flex flex-col h-full'>
-                  {/* Scrollable Area */}
-                  <div className="flex-grow overflow-y-auto p-6 space-y-4">
-                      <DialogHeader className="text-left">
-                          <DialogTitle className='font-headline text-2xl md:text-3xl'>{selectedProduct.name}</DialogTitle>
-                          <div className='flex items-center justify-between'>
-                              <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
-                              <p className="font-bold text-primary text-xl">
-                                  {formatPrice(selectedProduct.price)}
-                              </p>
-                          </div>
-                      </DialogHeader>
+              {/* Right: Content */}
+              <div className='flex flex-col h-full'>
+                {/* Scrollable Area */}
+                <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                  <DialogHeader className="text-left">
+                    <DialogTitle className='font-headline text-2xl md:text-3xl'>{selectedProduct.name}</DialogTitle>
+                    <div className='flex items-center justify-between'>
+                      <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
+                      <p className="font-bold text-primary text-xl">
+                        {formatPrice(selectedProduct.price)}
+                      </p>
+                    </div>
+                  </DialogHeader>
 
-                      {isClothing && (
-                      <div className="py-4">
-                          <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
-                          <RadioGroup 
-                          value={selectedSize} 
-                          onValueChange={setSelectedSize}
-                          className="flex items-center gap-2"
+                  {isClothing && (
+                    <div className="pt-4">
+                      <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
+                      <RadioGroup
+                        value={selectedSize}
+                        onValueChange={setSelectedSize}
+                        className="flex items-center gap-2"
+                      >
+                        {availableSizes.map(size => (
+                          <Label
+                            key={size}
+                            htmlFor={`size-${size}`}
+                            className={cn('flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors', selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80')}
                           >
-                          {availableSizes.map(size => (
-                              <Label 
-                              key={size}
-                              htmlFor={`size-${size}`}
-                              className={cn('flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors', selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80')}
-                              >
-                              <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
-                              {size}
-                              </Label>
-                          ))}
-                          </RadioGroup>
-                      </div>
-                      )}
-                      
-                      <div className="text-left space-y-2 text-base text-muted-foreground leading-relaxed">
-                           <ul className="list-disc list-inside space-y-1">
-                              {selectedProduct.description.split('\n').filter(line => line.trim()).map((line, index) => (
-                                  <li key={index}>{line}</li>
-                              ))}
-                          </ul>
-                      </div>
-                      
-                      <ProductRatingForm productId={selectedProduct.id} />
+                            <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                            {size}
+                          </Label>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  )}
+
+                  <div className="text-left space-y-2 text-base text-muted-foreground leading-relaxed pt-4">
+                    <ul className="list-disc list-inside space-y-1">
+                      {selectedProduct.description.split('\n').filter(line => line.trim()).map((line, index) => (
+                        <li key={index}>{line}</li>
+                      ))}
+                    </ul>
                   </div>
-                  
-                  {/* Sticky Footer */}
-                  <div className="flex-shrink-0 p-6 border-t border-border/50 bg-card">
-                      <div className="flex flex-col gap-2">
-                          <Button size="lg" onClick={handleAddToCartFromDetail}>
-                          <ShoppingCart className="mr-2 h-5 w-5" />
-                          Tambah ke Keranjang
-                          </Button>
-                          <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
-                          <Button variant="outline" size="lg" className="w-full">
-                              <Phone className="mr-2 h-5 w-5" />
-                              Hubungi Admin
-                          </Button>
-                          </a>
-                      </div>
+
+                  <ProductRatingForm productId={selectedProduct.id} />
+                </div>
+
+                {/* Sticky Footer */}
+                <div className="flex-shrink-0 p-6 border-t border-border/50 bg-card">
+                  <div className="flex flex-col gap-2">
+                    <Button size="lg" onClick={handleAddToCartFromDetail}>
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Tambah ke Keranjang
+                    </Button>
+                    <a href="https://wa.me/6282178200327?text=Saya%20tertarik%20dengan%20produk%20ini" target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" size="lg" className="w-full">
+                        <Phone className="mr-2 h-5 w-5" />
+                        Hubungi Admin
+                      </Button>
+                    </a>
                   </div>
                 </div>
+              </div>
             </div>
           )}
         </DialogContent>
