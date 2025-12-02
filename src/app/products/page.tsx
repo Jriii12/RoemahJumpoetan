@@ -370,7 +370,7 @@ export default function ProductsPage() {
                               <Label 
                               key={size}
                               htmlFor={`size-${size}`}
-                              className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
+                              className={cn('flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors', selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80')}
                               >
                               <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
                               {size}
