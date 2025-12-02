@@ -37,7 +37,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 
 const categories = [
@@ -347,8 +346,8 @@ export default function ProductsPage() {
                 {/* Right: Content */}
                 <div className='flex flex-col h-full'>
                   {/* Scrollable Area */}
-                  <div className="flex-grow overflow-y-auto p-6">
-                      <DialogHeader className="text-left mb-4">
+                  <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                      <DialogHeader className="text-left">
                           <DialogTitle className='font-headline text-2xl md:text-3xl'>{selectedProduct.name}</DialogTitle>
                           <div className='flex items-center justify-between'>
                               <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
@@ -359,7 +358,7 @@ export default function ProductsPage() {
                       </DialogHeader>
 
                       {isClothing && (
-                      <div className="mb-4">
+                      <div>
                           <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
                           <RadioGroup 
                           value={selectedSize} 
@@ -388,8 +387,6 @@ export default function ProductsPage() {
                           </ul>
                       </div>
                       
-                      <Separator className="my-6" />
-
                       <ProductRatingForm productId={selectedProduct.id} />
                   </div>
                   
