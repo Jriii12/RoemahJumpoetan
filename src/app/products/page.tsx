@@ -36,6 +36,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
 
 const categories = [
   'Semua Produk',
@@ -327,11 +328,11 @@ export default function ProductsPage() {
       </div>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-4xl p-0 max-h-[90vh]">
+        <DialogContent className="sm:max-w-4xl p-0 max-h-[90vh] grid grid-cols-1 md:grid-cols-2 gap-0">
           {selectedProduct && (
-            <div className='grid md:grid-cols-2 h-full'>
+            <>
               {/* Left: Image */}
-              <div className='relative h-full hidden md:block'>
+              <div className='relative h-[50vh] md:h-full w-full'>
                 <Image
                   src={selectedProduct.imageUrl}
                   alt={selectedProduct.name}
@@ -342,7 +343,8 @@ export default function ProductsPage() {
               </div>
 
               {/* Right: Content */}
-              <div className='flex flex-col h-full'>
+              <div className='flex flex-col h-full max-h-[90vh] md:max-h-none'>
+                
                 {/* Scrollable Area */}
                 <div className="flex-grow overflow-y-auto p-6 space-y-4">
                   <DialogHeader className="text-left">
@@ -378,6 +380,7 @@ export default function ProductsPage() {
                   )}
 
                   <div className="text-left space-y-2 text-base text-muted-foreground leading-relaxed pt-4">
+                     <p className='text-sm font-semibold text-foreground'>Deskripsi Produk:</p>
                     <ul className="list-disc list-inside space-y-1">
                       {selectedProduct.description.split('\n').filter(line => line.trim()).map((line, index) => (
                         <li key={index}>{line}</li>
@@ -389,7 +392,7 @@ export default function ProductsPage() {
                 </div>
 
                 {/* Sticky Footer */}
-                <div className="flex-shrink-0 p-6 border-t border-border/50 bg-card">
+                <div className="flex-shrink-0 p-6 border-t bg-card/95 backdrop-blur-sm">
                   <div className="flex flex-col gap-2">
                     <Button size="lg" onClick={handleAddToCartFromDetail}>
                       <ShoppingCart className="mr-2 h-5 w-5" />
@@ -404,7 +407,7 @@ export default function ProductsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
