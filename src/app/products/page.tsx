@@ -330,10 +330,11 @@ export default function ProductsPage() {
       </div>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-3xl bg-card p-0">
+        <DialogContent className="sm:max-w-3xl bg-card p-0 h-[90vh] flex flex-col">
           {selectedProduct && (
-            <div className='grid grid-cols-1 md:grid-cols-2 max-h-[90vh]'>
-                <div className='relative aspect-[3/4] md:aspect-auto rounded-t-lg md:rounded-l-lg md:rounded-tr-none overflow-hidden'>
+            <div className='grid md:grid-cols-2 h-full overflow-hidden'>
+                {/* Left: Image */}
+                <div className='relative h-full hidden md:block'>
                      <Image
                         src={selectedProduct.imageUrl}
                         alt={selectedProduct.name}
@@ -342,59 +343,59 @@ export default function ProductsPage() {
                         className="object-cover"
                     />
                 </div>
-                <div className='flex flex-col'>
-                  <ScrollArea className="h-[90vh] md:h-auto">
-                    <div className="p-6 flex flex-col gap-4 h-full">
-                      <div className='flex-grow'>
-                          <DialogHeader className="text-left">
-                              <DialogTitle className='font-headline text-2xl md:text-3xl mb-2'>{selectedProduct.name}</DialogTitle>
-                              <div className='flex items-center justify-between'>
-                                  <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
-                                  <p className="font-bold text-primary text-xl">
-                                      {formatPrice(selectedProduct.price)}
-                                  </p>
-                              </div>
-                          </DialogHeader>
 
-                          {isClothing && (
-                          <div className="my-4">
-                              <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
-                              <RadioGroup 
-                              value={selectedSize} 
-                              onValueChange={setSelectedSize}
-                              className="flex items-center gap-2"
-                              >
-                              {availableSizes.map(size => (
-                                  <Label 
-                                  key={size}
-                                  htmlFor={`size-${size}`}
-                                  className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
-                                  >
-                                  <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
-                                  {size}
-                                  </Label>
-                              ))}
-                              </RadioGroup>
+                {/* Right: Content */}
+                <div className='flex flex-col h-full'>
+                  {/* Scrollable Area */}
+                  <div className="flex-grow overflow-y-auto p-6">
+                      <DialogHeader className="text-left mb-4">
+                          <DialogTitle className='font-headline text-2xl md:text-3xl'>{selectedProduct.name}</DialogTitle>
+                          <div className='flex items-center justify-between'>
+                              <p className='text-sm text-muted-foreground'>{selectedProduct.category}</p>
+                              <p className="font-bold text-primary text-xl">
+                                  {formatPrice(selectedProduct.price)}
+                              </p>
                           </div>
-                          )}
-                          
-                          <DialogDescription asChild>
-                              <div className="my-4 text-left space-y-2 text-base text-muted-foreground leading-relaxed">
-                                  <ul className="list-disc list-inside space-y-1">
-                                      {selectedProduct.description.split('\n').map((line, index) => (
-                                          line.trim() && <li key={index}>{line}</li>
-                                      ))}
-                                  </ul>
-                              </div>
-                          </DialogDescription>
-                          
-                          <Separator className="my-6" />
+                      </DialogHeader>
 
-                          <ProductRatingForm productId={selectedProduct.id} />
-
+                      {isClothing && (
+                      <div className="mb-4">
+                          <Label className="font-semibold mb-2 block">Pilih Ukuran:</Label>
+                          <RadioGroup 
+                          value={selectedSize} 
+                          onValueChange={setSelectedSize}
+                          className="flex items-center gap-2"
+                          >
+                          {availableSizes.map(size => (
+                              <Label 
+                              key={size}
+                              htmlFor={`size-${size}`}
+                              className={`flex items-center justify-center rounded-md border text-sm h-9 w-9 cursor-pointer transition-colors ${selectedSize === size ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-accent/80'}`}
+                              >
+                              <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                              {size}
+                              </Label>
+                          ))}
+                          </RadioGroup>
+                      </div>
+                      )}
+                      
+                      <div className="text-left space-y-2 text-base text-muted-foreground leading-relaxed">
+                          <ul className="list-disc list-inside space-y-1">
+                              {selectedProduct.description.split('\n').map((line, index) => (
+                                  line.trim() && <li key={index}>{line}</li>
+                              ))}
+                          </ul>
                       </div>
                       
-                      <div className="flex flex-col gap-2 mt-6 sticky bottom-0 bg-card pt-4">
+                      <Separator className="my-6" />
+
+                      <ProductRatingForm productId={selectedProduct.id} />
+                  </div>
+                  
+                  {/* Sticky Footer */}
+                  <div className="flex-shrink-0 p-6 border-t border-border/50 bg-card">
+                      <div className="flex flex-col gap-2">
                           <Button size="lg" onClick={handleAddToCartFromDetail}>
                           <ShoppingCart className="mr-2 h-5 w-5" />
                           Tambah ke Keranjang
@@ -406,8 +407,7 @@ export default function ProductsPage() {
                           </Button>
                           </a>
                       </div>
-                    </div>
-                  </ScrollArea>
+                  </div>
                 </div>
             </div>
           )}
